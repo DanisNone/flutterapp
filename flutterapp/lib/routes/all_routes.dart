@@ -1,4 +1,4 @@
-const String baseUrl = "http://127.0.0.1";
+const String baseUrl = "http://10.49.65.153:8000";
 const String api_v1 = "$baseUrl/api/v1";
 const String registerUrl = "$api_v1/auth/register";
 const String authUrl = "$api_v1/auth/login";
