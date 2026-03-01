@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/service/jwttoken.dart';
 import 'package:flutterapp/service/register.dart';
+import 'package:flutterapp/service/secure_storage.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -51,13 +52,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password, 
         confirmPassword
       );
-      
+      await SecureStorageService().saveJWTToken(token);
       if (!mounted) return;
 
       // Переходим на главный экран
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen(token: token)),
+        MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     } catch (e) {
       if (!mounted) return;
