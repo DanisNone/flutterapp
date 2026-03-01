@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/service/jwttoken.dart';
 import 'package:flutterapp/service/login.dart';
+import 'package:flutterapp/service/secure_storage.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -20,16 +21,19 @@ class AuthScreenState extends State<AuthScreen> {
     JWTToken token;
     try {
       token = await login(email, password);
+      await SecureStorageService().saveJWTToken(token);
       if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen(token: token)),
+        MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Ошибка: $e")),
+        SnackBar(
+          content: Text("Ошибка: $e", style: const TextStyle(color: Colors.white)),
+          backgroundColor: Colors.red.shade700,
+        ),
       );
     }
   }
