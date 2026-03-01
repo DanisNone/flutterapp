@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/register_screen.dart';
 import 'package:flutterapp/screens/home_screen.dart';
+import 'package:flutterapp/screens/websocket_screen.dart';
 import 'package:flutterapp/service/jwttoken.dart';
 import 'package:flutterapp/service/login.dart';
 import 'package:flutterapp/service/secure_storage.dart';
@@ -26,7 +27,7 @@ class AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => WebSocketScreen(jwtToken: token.accessToken,)),
       );
     } catch (e) {
       if (!mounted) return;
