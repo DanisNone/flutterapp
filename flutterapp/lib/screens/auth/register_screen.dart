@@ -165,7 +165,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed:
-                            _isLoading ? null : () => Navigator.pop(context),
+                            _isLoading ? null : () => {
+                            Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                      )},
                         style: OutlinedButton.styleFrom(
                           padding:
                               const EdgeInsets.symmetric(vertical: 16),
