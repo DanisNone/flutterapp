@@ -26,16 +26,16 @@ Future<JWTToken> register(String email, String username, String fullName, String
         "confirm_password": confirmPassword,
       }),
     ).timeout(const Duration(seconds: 10));
-
     if (res.statusCode == 200 || res.statusCode == 201) {
       return JWTToken.fromRawJson(res.body);
     } else {
+      dynamic errorData;
       try {
-        final errorData = jsonDecode(res.body);
-        throw Exception('Ошибка регистрации: ${errorData['message'] ?? res.body}');
+        errorData = jsonDecode(res.body);
       } catch (e) {
-        throw Exception('Ошибка регистрации: ${res.statusCode}');
+        throw Exception('Ошибка регистрации: ${res.statusCode};');
       }
+      throw Exception('Ошибка регистрации: ${errorData['detail'] ?? res.body}');
     }
   } catch (e) {
     if (e.toString().contains('Timeout')) {
