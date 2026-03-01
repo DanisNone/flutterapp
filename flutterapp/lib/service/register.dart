@@ -8,8 +8,8 @@ Future<JWTToken> register(String email, String username, String fullName, String
     throw Exception('Пароли не совпадают');
   }
   
-  if (password.length < 6) {
-    throw Exception('Пароль должен содержать минимум 6 символов');
+  if (password.length < 8) {
+    throw Exception('Пароль должен содержать минимум 8 символов');
   }
 
   try {
