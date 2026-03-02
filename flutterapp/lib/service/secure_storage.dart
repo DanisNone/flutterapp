@@ -1,5 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutterapp/service/jwttoken.dart';
+import 'package:flutterapp/model/jwttoken.dart';
 
 class SecureStorageService {
   final _storage = const FlutterSecureStorage();

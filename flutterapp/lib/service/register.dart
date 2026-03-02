@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutterapp/routes/all_routes.dart' show registerUrl;
-import 'package:flutterapp/service/jwttoken.dart';
+import 'package:flutterapp/model/jwttoken.dart';
 import 'package:http/http.dart' as http;
 
 Future<JWTToken> register(String email, String username, String fullName, String password, String confirmPassword) async {
