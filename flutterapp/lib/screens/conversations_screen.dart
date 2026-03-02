@@ -4,6 +4,15 @@ import 'package:flutterapp/screens/chat_screen.dart';
 import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/model/jwttoken.dart';
+import 'package:flutterapp/widgets/common/loading_indicator.dart';
+import 'package:flutterapp/widgets/common/error_view.dart';
+import 'package:flutterapp/widgets/common/empty_state.dart';
+import 'package:flutterapp/widgets/common/responsive_container.dart';
+import 'package:flutterapp/widgets/conversations/conversation_card.dart';
+import 'package:flutterapp/widgets/conversations/create_conversation_sheet.dart';
+import 'package:flutterapp/constants/app_colors.dart';
+import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:flutterapp/utils/responsive.dart';
 
 class ConversationsScreen extends StatefulWidget {
   final JWTToken token;
@@ -22,6 +31,10 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   List<int> _conversations = [];
   bool _isLoading = false;
   String? _errorMessage;
+  
+  // Кэш для последних сообщений (можно заменить на реальные данные из API)
+  final Map<int, String> _lastMessages = {};
+  final Map<int, DateTime> _lastMessageTimes = {};
 
   @override
   void initState() {
@@ -46,142 +59,77 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         _conversations = convs;
         _isLoading = false;
       });
+      
+      // Загружаем последние сообщения для каждой переписки
+      _loadLastMessages();
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = 'Ошибка соединения: $e';
+        _errorMessage = 'Ошибка загрузки: $e';
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadLastMessages() async {
+    // Здесь можно загрузить последние сообщения для каждой переписки
+    // Пока оставим заглушку
+    for (final id in _conversations) {
+      _lastMessages[id] = 'Последнее сообщение...';
+      _lastMessageTimes[id] = DateTime.now().subtract(Duration(minutes: id));
+    }
+    if (mounted) setState(() {});
   }
 
   Future<void> _refresh() async {
     await _loadConversations();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Мои переписки'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openCreateConversationSheet,
-        child: const Icon(Icons.add),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildUserInfo(),
-            const SizedBox(height: 20),
-            _buildHeader(),
-            const SizedBox(height: 16),
-            _buildContent(),
-          ],
-        ),
-      ),
-    );
-  }
   void _openCreateConversationSheet() {
-    final controller = TextEditingController();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusL)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Новая переписка',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'ID собеседника',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final text = controller.text.trim();
-
-                    if (text.isEmpty) return;
-
-                    final id = int.tryParse(text);
-                    if (id == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Введите корректный числовой ID'),
-                        ),
-                      );
-                      return;
-                    }
-
-                    Navigator.pop(context);
-
-                    await _createConversation(id);
-                  },
-                  child: const Text('Создать'),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context) => CreateConversationSheet(
+        onCreate: _createConversation,
+      ),
     );
   }
 
   Future<void> _createConversation(int otherUserId) async {
     if (_user == null) return;
 
+    Navigator.pop(context); // Закрываем bottom sheet
+
     try {
-      final (conversationId, alreadyExists) =
-          await getOrCreateDialog(_user!, otherUserId, widget.token);
+      final (conversationId, alreadyExists) = await getOrCreateDialog(
+        _user!,
+        otherUserId,
+        widget.token,
+      );
 
       if (!mounted) return;
 
       final message = alreadyExists
-          ? 'Переписка уже существует (ID: $conversationId)'
-          : 'Переписка создана (ID: $conversationId)';
+          ? 'Переписка уже существует'
+          : 'Переписка создана';
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          content: Text('$message (ID: $conversationId)'),
+          backgroundColor: alreadyExists ? Colors.orange : Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
 
       await _refresh();
 
       if (!mounted) return;
+      
+      // Плавный переход в чат
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -191,35 +139,63 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           ),
         ),
       );
-
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка создания: $e'),
+          content: Text('Ошибка: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
+
   Widget _buildUserInfo() {
     if (_user == null) return const SizedBox();
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimensions.paddingM),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.person, color: Colors.blue),
-          const SizedBox(width: 8),
-          Text(
-            'Пользователь: ${_user!.username}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.person,
+              color: Colors.white,
+              size: AppDimensions.iconM,
+            ),
+          ),
+          const SizedBox(width: AppDimensions.paddingM),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Пользователь',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  _user!.username,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -232,15 +208,20 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Список переписок',
-          style: Theme.of(context).textTheme.titleLarge,
+          'Мои переписки',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         if (!_isLoading && _conversations.isNotEmpty)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingM,
+              vertical: AppDimensions.paddingXS,
+            ),
             decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(20),
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
             ),
             child: Text(
               '${_conversations.length}',
@@ -258,106 +239,93 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     if (_isLoading) {
       return const Padding(
         padding: EdgeInsets.only(top: 40),
-        child: Center(
-          child: Column(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Загрузка переписок...'),
-            ],
-          ),
-        ),
+        child: LoadingIndicator(message: 'Загрузка переписок...'),
       );
     }
 
     if (_errorMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 40),
-        child: Column(
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _refresh,
-              child: const Text('Повторить попытку'),
-            ),
-          ],
-        ),
+      return ErrorView(
+        error: _errorMessage!,
+        onRetry: _refresh,
       );
     }
 
     if (_conversations.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 40),
-        child: Column(
-          children: [
-            Icon(
-              Icons.chat_bubble_outline,
-              size: 64,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'У вас пока нет переписок',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
+      return EmptyState(
+        message: 'У вас пока нет переписок',
+        icon: Icons.chat_bubble_outline,
+        buttonText: 'Создать первую',
+        onButtonPressed: _openCreateConversationSheet,
       );
     }
 
     return ListView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: _conversations.length,
       itemBuilder: (context, index) {
         final id = _conversations[index];
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.blue.shade100,
-              child: Text(
-                id.toString(),
-                style: TextStyle(
-                  color: Colors.blue.shade800,
-                  fontWeight: FontWeight.bold,
+        return ConversationCard(
+          id: id,
+          lastMessage: _lastMessages[id],
+          lastMessageTime: _lastMessageTimes[id],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(
+                  conversationId: id,
+                  token: widget.token,
                 ),
               ),
-            ),
-            title: Text(
-              'Переписка #$id',
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-            subtitle: Text(
-              'ID: $id',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ChatScreen(
-                    conversationId: id,
-                    token: widget.token,
-                  ),
-                ),
-              );
-            },
-          ),
+            );
+          },
         );
       },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Мои переписки'),
+        elevation: 0,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refresh,
+            tooltip: 'Обновить',
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openCreateConversationSheet,
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        color: AppColors.primary,
+        child: ResponsiveContainer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppDimensions.paddingM),
+              _buildUserInfo(),
+              const SizedBox(height: AppDimensions.paddingXL),
+              _buildHeader(),
+              const SizedBox(height: AppDimensions.paddingL),
+              Expanded(
+                child: _buildContent(),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,29 +1,21 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
-import 'package:flutterapp/screens/conversations_screen.dart';
-import 'package:flutterapp/model/jwttoken.dart';
-import 'package:flutterapp/service/secure_storage.dart';
+import 'package:flutterapp/theme/app_theme.dart';
 
-void main() async {
-  JWTToken? token = await SecureStorageService().getJWTToken();
-  runApp(MyApp(token: token));
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final JWTToken? token;
-  const MyApp({super.key, required this.token});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Flutter Chat',
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Auth Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: token != null ? ConversationsScreen(token: token!) : AuthScreen(),
+      theme: AppTheme.lightTheme,
+      home: const LoginScreen(),
     );
   }
-} 
+}
