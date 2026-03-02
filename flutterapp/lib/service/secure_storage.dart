@@ -16,6 +16,11 @@ class SecureStorageService {
     return JWTToken(accessToken: accessToken, tokenType: tokenType);
   }
 
+  Future<void> deleteJWTToken() async {
+    await _storage.delete(key: 'accessToken');
+    await _storage.delete(key: 'tokenType');
+  }
+
   Future<void> clear() async {
     await _storage.deleteAll();
   }
