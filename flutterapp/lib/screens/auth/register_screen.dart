@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/screens/conversations_screen.dart';
-import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/service/register.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/utils/responsive.dart';
