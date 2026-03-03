@@ -27,4 +27,7 @@ class JWTToken {
       JWTToken.fromJson(jsonDecode(str));
 
   String toRawJson() => jsonEncode(toJson());
+  String toHeaderValue() {
+    return "$tokenType $accessToken";
+  }
 }

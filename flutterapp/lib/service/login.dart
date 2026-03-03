@@ -1,5 +1,5 @@
 import 'package:flutterapp/routes/all_routes.dart' show authUrl;
-import 'package:flutterapp/service/jwttoken.dart';
+import 'package:flutterapp/model/jwttoken.dart';
 import 'package:http/http.dart' as http;
 
 

@@ -1,148 +1,170 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/register_screen.dart';
-import 'package:flutterapp/screens/home_screen.dart';
-import 'package:flutterapp/service/jwttoken.dart';
+import 'package:flutterapp/screens/conversations_screen.dart';
+import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/service/login.dart';
 import 'package:flutterapp/service/secure_storage.dart';
+import 'package:flutterapp/service/user.dart';
+import 'package:flutterapp/widgets/auth/auth_form.dart';
+import 'package:flutterapp/widgets/auth/auth_field.dart';
+import 'package:flutterapp/utils/responsive.dart';
 
-class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  AuthScreenState createState() => AuthScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class AuthScreenState extends State<AuthScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  bool _isCheckingToken = true;
 
-  void _login() async {
-    final email = _emailController.text;
-    final password = _passwordController.text;
-    JWTToken token;
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingToken();
+  }
+
+  Future<void> _checkExistingToken() async {
+    setState(() => _isCheckingToken = true);
+    
     try {
-      token = await login(email, password);
+      // Получаем сохраненный токен
+      final JWTToken? token = await SecureStorageService().getJWTToken();
+      
+      if (token != null) {
+        // Проверяем валидность токена, пытаясь получить данные пользователя
+        try {
+          await getUser(token);
+          
+          // Если запрос успешен, переходим на следующий экран
+          if (!mounted) return;
+          
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ConversationsScreen(token: token),
+            ),
+          );
+          return;
+        } catch (e) {
+          // Токен невалидный - удаляем его и остаемся на экране входа
+          await SecureStorageService().deleteJWTToken();
+        }
+      }
+    } catch (e) {
+      // Ошибка при проверке токена - просто остаемся на экране входа
+      debugPrint('Ошибка при проверке токена: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingToken = false);
+      }
+    }
+  }
+
+  Future<void> _login() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final token = await login(
+        _emailController.text,
+        _passwordController.text,
+      );
+      
       await SecureStorageService().saveJWTToken(token);
+      
       if (!mounted) return;
+      
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => ConversationsScreen(token: token),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Ошибка: $e", style: const TextStyle(color: Colors.white)),
-          backgroundColor: Colors.red.shade700,
+          content: Text('Ошибка входа: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          // Ограничиваем максимальную ширину формы для ПК
-          double maxWidth = constraints.maxWidth < 500 ? constraints.maxWidth : 400;
-
-          return Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                width: maxWidth,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 12,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Авторизация',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 24),
-                    TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: 'Пароль',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _login,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+      backgroundColor: Colors.blue[50],
+      body: ResponsiveBuilder(
+        builder: (context, isMobile, isTablet, isDesktop) {
+          if (_isCheckingToken) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          
+          return AuthForm(
+            title: 'Авторизация',
+            fields: [
+              AuthField(
+                controller: _emailController,
+                label: 'Email',
+                keyboardType: TextInputType.emailAddress,
+                enabled: !_isLoading,
+              ),
+              const SizedBox(height: 16),
+              AuthField(
+                controller: _passwordController,
+                label: 'Пароль',
+                obscure: true,
+                enabled: !_isLoading,
+              ),
+            ],
+            submitText: 'Войти',
+            onSubmit: _login,
+            isLoading: _isLoading,
+            footer: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
                           ),
-                        ),
-                        child: const Text(
-                          'Войти',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Регистрация',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ],
+                        );
+                      },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                child: const Text('Регистрация'),
               ),
             ),
           );
         },
       ),
-      backgroundColor: Colors.blue[50],
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

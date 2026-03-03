@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/screens/home_screen.dart';
+import 'package:flutterapp/screens/auth/login_screen.dart';
+import 'package:flutterapp/screens/conversations_screen.dart';
 import 'package:flutterapp/service/register.dart';
 import 'package:flutterapp/service/secure_storage.dart';
+import 'package:flutterapp/utils/responsive.dart';
+import 'package:flutterapp/widgets/auth/auth_form.dart';
+import 'package:flutterapp/widgets/auth/auth_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,27 +15,27 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-
+  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  
   bool _isLoading = false;
 
-  void _register() async {
-    final email = _emailController.text.trim();
-    final username = _usernameController.text.trim();
-    final fullName = _fullNameController.text.trim();
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
-
-    if (email.isEmpty ||
-        username.isEmpty ||
-        fullName.isEmpty ||
-        password.isEmpty ||
-        confirmPassword.isEmpty) {
+  Future<void> _register() async {
+    // Валидация
+    if (_emailController.text.isEmpty ||
+        _usernameController.text.isEmpty ||
+        _fullNameController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
       _showError('Пожалуйста, заполните все поля');
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showError('Пароли не совпадают');
       return;
     }
 
@@ -39,28 +43,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final token = await register(
-        email,
-        username,
-        fullName,
-        password,
-        confirmPassword,
+        _emailController.text,
+        _usernameController.text,
+        _fullNameController.text,
+        _passwordController.text,
+        _confirmPasswordController.text,
       );
 
       await SecureStorageService().saveJWTToken(token);
+      
       if (!mounted) return;
-
+      
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => ConversationsScreen(token: token)),
       );
     } catch (e) {
       if (!mounted) return;
-
-      String error = e.toString();
-      if (error.startsWith('Exception: ')) {
-        error = error.substring(11);
-      }
-      _showError(error);
+      _showError(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -71,8 +71,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: Colors.red.shade700,
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -81,135 +82,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          double maxWidth =
-              constraints.maxWidth < 500 ? constraints.maxWidth : 400;
-
-          return Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                width: maxWidth,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 12,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Регистрация',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    _buildInput(_emailController, 'Email',
-                        keyboard: TextInputType.emailAddress),
-                    const SizedBox(height: 16),
-
-                    _buildInput(_usernameController, 'Имя пользователя'),
-                    const SizedBox(height: 16),
-
-                    _buildInput(_fullNameController, 'Полное имя'),
-                    const SizedBox(height: 16),
-
-                    _buildInput(_passwordController, 'Пароль',
-                        obscure: true),
-                    const SizedBox(height: 16),
-
-                    _buildInput(
-                        _confirmPasswordController, 'Подтвердите пароль',
-                        obscure: true),
-                    const SizedBox(height: 24),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(12),
+      body: ResponsiveBuilder(
+        builder: (context, isMobile, isTablet, isDesktop) {
+          return AuthForm(
+            title: 'Регистрация',
+            fields: [
+              AuthField(
+                controller: _emailController,
+                label: 'Email',
+                keyboardType: TextInputType.emailAddress,
+                enabled: !_isLoading,
+              ),
+              const SizedBox(height: 16),
+              AuthField(
+                controller: _usernameController,
+                label: 'Имя пользователя',
+                enabled: !_isLoading,
+              ),
+              const SizedBox(height: 16),
+              AuthField(
+                controller: _fullNameController,
+                label: 'Полное имя',
+                enabled: !_isLoading,
+              ),
+              const SizedBox(height: 16),
+              AuthField(
+                controller: _passwordController,
+                label: 'Пароль',
+                obscure: true,
+                enabled: !_isLoading,
+              ),
+              const SizedBox(height: 16),
+              AuthField(
+                controller: _confirmPasswordController,
+                label: 'Подтвердите пароль',
+                obscure: true,
+                enabled: !_isLoading,
+              ),
+            ],
+            submitText: 'Зарегистрироваться',
+            onSubmit: _register,
+            isLoading: _isLoading,
+            footer: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
                           ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text(
-                                'Зарегистрироваться',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed:
-                            _isLoading ? null : () => {
-                            Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                      )},
-                        style: OutlinedButton.styleFrom(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Уже есть аккаунт? Войти',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ],
+                        );
+                      },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                child: const Text('Уже есть аккаунт? Войти'),
               ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildInput(
-    TextEditingController controller,
-    String label, {
-    bool obscure = false,
-    TextInputType keyboard = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: obscure,
-      keyboardType: keyboard,
-      enabled: !_isLoading,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
       ),
     );
   }

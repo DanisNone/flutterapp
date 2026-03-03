@@ -1,0 +1,63 @@
+import 'package:flutter/material.dart';
+import 'package:flutterapp/constants/app_colors.dart';
+import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:flutterapp/constants/app_text_styles.dart';
+import 'package:flutterapp/utils/responsive.dart';
+
+class MessageBubble extends StatelessWidget {
+  final String text;
+  final bool isMine;
+  final DateTime? timestamp;
+  
+  const MessageBubble({
+    super.key,
+    required this.text,
+    required this.isMine,
+    this.timestamp,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: AppDimensions.paddingXS),
+        padding: const EdgeInsets.all(AppDimensions.paddingM),
+        constraints: BoxConstraints(
+          maxWidth: Responsive.isDesktop(context)
+              ? 400
+              : MediaQuery.of(context).size.width * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: isMine ? AppColors.myMessage : AppColors.theirMessage,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              text,
+              style: isMine ? AppTextStyles.myMessage : AppTextStyles.theirMessage,
+            ),
+            if (timestamp != null) ...[
+              const SizedBox(height: AppDimensions.paddingXS),
+              Text(
+                _formatTime(timestamp!),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isMine
+                      ? Colors.white.withOpacity(0.7)
+                      : AppColors.textSecondary.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+}
