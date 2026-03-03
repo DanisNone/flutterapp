@@ -32,9 +32,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   
-  // Кэш для последних сообщений (можно заменить на реальные данные из API)
   final Map<int, String> _lastMessages = {};
-  final Map<int, DateTime> _lastMessageTimes = {};
 
   @override
   void initState() {
@@ -58,10 +56,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         _user = user;
         _conversations = convs;
         _isLoading = false;
-      });
-      
-      // Загружаем последние сообщения для каждой переписки
-      _loadLastMessages();
+      });      
     } catch (e) {
       if (!mounted) return;
 
@@ -70,16 +65,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  Future<void> _loadLastMessages() async {
-    // Здесь можно загрузить последние сообщения для каждой переписки
-    // Пока оставим заглушку
-    for (final info in _conversations) {
-      _lastMessages[info.id] = 'Последнее сообщение...';
-      _lastMessageTimes[info.id] = DateTime.now().subtract(Duration(minutes: info.id));
-    }
-    if (mounted) setState(() {});
   }
 
   Future<void> _refresh() async {
@@ -270,8 +255,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         return ConversationCard(
           info: info,
           currentUserId: _user!.id,
-          lastMessage: _lastMessages[id],
-          lastMessageTime: _lastMessageTimes[id],
           onTap: () {
             Navigator.push(
               context,

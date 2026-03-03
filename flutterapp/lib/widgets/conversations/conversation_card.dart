@@ -6,29 +6,25 @@ import 'package:flutterapp/model/ConversationInfo.dart';
 class ConversationCard extends StatelessWidget {
   final ConversationInfo info;
   final int currentUserId;
-  final String? lastMessage;
-  final DateTime? lastMessageTime;
   final VoidCallback onTap;
   
   const ConversationCard({
     super.key,
     required this.info,
     required this.currentUserId,
-    this.lastMessage,
-    this.lastMessageTime,
     required this.onTap,
   });
   
   @override
   Widget build(BuildContext context) {
     String name;
-    if (info.userfInfo == null || info.userfInfo!.length != 2) {
+    if (info.usersInfo == null || info.usersInfo!.length != 2) {
       name = 'Беседа #${info.id}';
     } else {
-      if (info.userfInfo![0].$1 == currentUserId) {
-        name = info.userfInfo![1].$2;
+      if (info.usersInfo![0].$1 == currentUserId) {
+        name = info.usersInfo![1].$2;
       } else {
-        name = info.userfInfo![0].$2;
+        name = info.usersInfo![0].$2;
       }
     }
     return Card(
@@ -58,13 +54,13 @@ class ConversationCard extends StatelessWidget {
             fontSize: 16,
           ),
         ),
-        subtitle: lastMessage != null
+        subtitle: info.lastMessage != null
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
                   Text(
-                    lastMessage!,
+                    info.lastMessage!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -72,16 +68,14 @@ class ConversationCard extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-                  if (lastMessageTime != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      _formatTime(lastMessageTime!),
-                      style: TextStyle(
-                        color: AppColors.textHint,
-                        fontSize: 12,
-                      ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatTime(info.lastUpdate),
+                    style: TextStyle(
+                      color: AppColors.textHint,
+                      fontSize: 12,
                     ),
-                  ],
+                  ),
                 ],
               )
             : Text(
