@@ -1,5 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutterapp/service/jwttoken.dart';
+import 'package:flutterapp/model/jwttoken.dart';
 
 class SecureStorageService {
   final _storage = const FlutterSecureStorage();
@@ -14,6 +14,11 @@ class SecureStorageService {
     String? tokenType = await _storage.read(key: 'tokenType');
     if (accessToken == null || tokenType == null) return null;
     return JWTToken(accessToken: accessToken, tokenType: tokenType);
+  }
+
+  Future<void> deleteJWTToken() async {
+    await _storage.delete(key: 'accessToken');
+    await _storage.delete(key: 'tokenType');
   }
 
   Future<void> clear() async {

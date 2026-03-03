@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
+import 'package:flutterapp/theme/app_theme.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -11,12 +12,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Flutter Chat',
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Auth Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: AuthScreen(),
+      theme: AppTheme.lightTheme,
+      home: const LoginScreen(),
     );
   }
 }
