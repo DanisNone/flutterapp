@@ -106,11 +106,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (!mounted) return;
 
-      setState(() {
-        _messages.add(message);
-      });
+      if (message.conversationId == widget.conversationId) {
+        setState(() {
+          _messages.add(message);
+        });
 
-      _scrollToBottom();
+        _scrollToBottom();
+      }
     } catch (e) {
       debugPrint('Error parsing message: $e');
     }
