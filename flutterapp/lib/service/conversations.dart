@@ -1,12 +1,16 @@
 import 'dart:convert';
 
+import 'package:flutterapp/model/ConversationInfo.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/routes/all_routes.dart';
 import 'package:http/http.dart' as http;
 
-Future<List<int>> getAllUserConversations(User user, JWTToken token) async {
+
+
+
+Future<List<ConversationInfo>> getAllUserConversations(User user, JWTToken token) async {
   final response = await http.get(
     Uri.parse('$getConversationsUrl/${user.id}'),
     headers: {
@@ -15,7 +19,7 @@ Future<List<int>> getAllUserConversations(User user, JWTToken token) async {
   );
   if (response.statusCode == 200) {
     final List<dynamic> data = json.decode(response.body);
-    return data.cast<int>();
+    return data.map((c) => ConversationInfo.fromJson(c)).toList();
   }
   throw Exception('Failed to load conversations: ${response.statusCode}');
 }
