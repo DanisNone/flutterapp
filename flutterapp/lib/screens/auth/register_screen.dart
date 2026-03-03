@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
+import 'package:flutterapp/screens/conversations_screen.dart';
 import 'package:flutterapp/screens/home_screen.dart';
 import 'package:flutterapp/service/register.dart';
 import 'package:flutterapp/service/secure_storage.dart';
@@ -56,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => ConversationsScreen(token: token)),
       );
     } catch (e) {
       if (!mounted) return;
