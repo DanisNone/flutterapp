@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:flutterapp/model/ConversationInfo.dart';
 
 class ConversationCard extends StatelessWidget {
-  final int id;
+  final ConversationInfo info;
+  final int currentUserId;
   final String? lastMessage;
   final DateTime? lastMessageTime;
   final VoidCallback onTap;
   
   const ConversationCard({
     super.key,
-    required this.id,
+    required this.info,
+    required this.currentUserId,
     this.lastMessage,
     this.lastMessageTime,
     required this.onTap,
@@ -18,6 +21,16 @@ class ConversationCard extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
+    String name;
+    if (info.userfInfo == null || info.userfInfo!.length != 2) {
+      name = 'Беседа #${info.id}';
+    } else {
+      if (info.userfInfo![0].$1 == currentUserId) {
+        name = info.userfInfo![1].$2;
+      } else {
+        name = info.userfInfo![0].$2;
+      }
+    }
     return Card(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
       elevation: 2,
@@ -30,7 +43,7 @@ class ConversationCard extends StatelessWidget {
           backgroundColor: AppColors.primaryLight,
           radius: 24,
           child: Text(
-            id.toString(),
+            info.id.toString(),
             style: TextStyle(
               color: AppColors.primaryDark,
               fontWeight: FontWeight.bold,
@@ -39,7 +52,7 @@ class ConversationCard extends StatelessWidget {
           ),
         ),
         title: Text(
-          'Переписка #$id',
+          name,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 16,

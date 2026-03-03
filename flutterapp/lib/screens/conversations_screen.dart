@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutterapp/model/ConversationInfo.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
 import 'package:flutterapp/service/conversations.dart';
@@ -12,7 +13,6 @@ import 'package:flutterapp/widgets/conversations/conversation_card.dart';
 import 'package:flutterapp/widgets/conversations/create_conversation_sheet.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/utils/responsive.dart';
 
 class ConversationsScreen extends StatefulWidget {
   final JWTToken token;
@@ -28,7 +28,7 @@ class ConversationsScreen extends StatefulWidget {
 
 class _ConversationsScreenState extends State<ConversationsScreen> {
   User? _user;
-  List<int> _conversations = [];
+  List<ConversationInfo> _conversations = [];
   bool _isLoading = false;
   String? _errorMessage;
   
@@ -75,9 +75,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   Future<void> _loadLastMessages() async {
     // Здесь можно загрузить последние сообщения для каждой переписки
     // Пока оставим заглушку
-    for (final id in _conversations) {
-      _lastMessages[id] = 'Последнее сообщение...';
-      _lastMessageTimes[id] = DateTime.now().subtract(Duration(minutes: id));
+    for (final info in _conversations) {
+      _lastMessages[info.id] = 'Последнее сообщение...';
+      _lastMessageTimes[info.id] = DateTime.now().subtract(Duration(minutes: info.id));
     }
     if (mounted) setState(() {});
   }
@@ -264,10 +264,12 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: _conversations.length,
       itemBuilder: (context, index) {
-        final id = _conversations[index];
+        final info = _conversations[index];
+        final id = info.id;
 
         return ConversationCard(
-          id: id,
+          info: info,
+          currentUserId: _user!.id,
           lastMessage: _lastMessages[id],
           lastMessageTime: _lastMessageTimes[id],
           onTap: () {
