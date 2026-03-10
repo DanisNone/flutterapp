@@ -43,8 +43,10 @@ class ChatManager {
         onError: _onError
       );
       _setConnection(true);
+      print("connection good");
     } catch (e) {
       _setConnection(false);
+      print("connection bad");
     }
   }
 
@@ -63,15 +65,22 @@ class ChatManager {
     _listeners.removeLast();
   }
 
-  void _onData(dynamic data) {
-    final message = Message.fromRawJson(data as String);
+  void _onData(dynamic response) 
+  {
+    Map<String, dynamic> decoded = jsonDecode(response);
+    if (decoded["type"] != "new_message") {
+      return; // TODO add logic
+    }
+    Map<String, dynamic> data = decoded["data"];
+    data["message"]["conversation_id"] = data["conversation"]["id"] as int;
+    final message = Message.fromJson(data["message"]);
     for (var listener in _listeners) {
       listener.newMessage?.call(message);
     }
   }
   void _onError(error) {
     for (var listener in _listeners) {
-      listener.error?.call();
+      listener.error?.call(error);
     }
   }
   void sendMessage(int conversationId, String text) {
@@ -84,5 +93,12 @@ class ChatManager {
   void reconnect(Function(bool) callback) {
     setToken(token!);
     callback(_isConnected);
+  }
+
+  void dispose() {
+    print("chatmanager dispose");
+    if (_isConnected) {
+      _channel.sink.close();
+    }
   }
 }

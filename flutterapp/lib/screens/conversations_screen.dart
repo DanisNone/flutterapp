@@ -85,6 +85,12 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    manager.dispose();
+    super.dispose();
+  }
+
   Future<void> _refresh() async {
     await _loadConversations();
   }
