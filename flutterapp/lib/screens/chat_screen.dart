@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user.dart';
-import 'package:flutterapp/routes/all_routes.dart';
+import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/widgets/common/empty_state.dart';
@@ -14,16 +13,17 @@ import 'package:flutterapp/widgets/chat/chat_input.dart';
 import 'package:flutterapp/widgets/common/connection_status.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatScreen extends StatefulWidget {
   final int conversationId;
   final JWTToken token;
+  final ChatManager manager;
 
   const ChatScreen({
     super.key,
     required this.conversationId,
     required this.token,
+    required this.manager
   });
 
   @override
@@ -34,7 +34,6 @@ class _ChatScreenState extends State<ChatScreen> {
   User? _user;
   List<Message> _messages = [];
 
-  late WebSocketChannel _channel;
   bool _isConnected = false;
   bool _isLoading = true;
   String? _error;
@@ -45,6 +44,13 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    widget.manager.addListener(ChatListener(
+      newMessage: _handleIncomingMessage,
+      connection: (conn) {
+        if (!conn) _handleConnectionClosed();
+      },
+      error: _handleConnectionError
+    ));
     _init();
   }
 
@@ -62,9 +68,8 @@ class _ChatScreenState extends State<ChatScreen> {
         _user = user;
         _messages = history;
         _isLoading = false;
+        _isConnected = true;
       });
-
-      _connectSocket();
       _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
@@ -76,34 +81,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _connectSocket() {
+  void _handleIncomingMessage(Message message) {
     try {
-      final uri = Uri.parse(webSocketUrl).replace(
-        queryParameters: {"token": widget.token.accessToken},
-      );
-      
-      _channel = WebSocketChannel.connect(uri);
-
-      _channel.stream.listen(
-        _handleIncomingMessage,
-        onDone: _handleConnectionClosed,
-        onError: _handleConnectionError,
-      );
-
-      setState(() => _isConnected = true);
-    } catch (e) {
-      setState(() {
-        _isConnected = false;
-        _error = 'Ошибка подключения: $e';
-      });
-    }
-  }
-
-  void _handleIncomingMessage(dynamic data) {
-    try {
-      final decoded = jsonDecode(data);
-      final message = Message.fromJson(decoded);
-
       if (!mounted) return;
 
       if (message.conversationId == widget.conversationId) {
@@ -131,12 +110,11 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
       
-      // Пытаемся переподключиться через 3 секунды
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          _connectSocket();
-        }
-      });
+      widget.manager.reconnect(
+        (isconn) => setState(() {
+          _isConnected = isconn;
+        })
+      );
     }
   }
 
@@ -152,14 +130,12 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty || !_isConnected) return;
-
-    final payload = jsonEncode({
-      "conversation_id": widget.conversationId,
-      "text": text,
-    });
-
-    _channel.sink.add(payload);
+    widget.manager.sendMessage(
+      widget.conversationId,
+      text
+    );
     _controller.clear();
+
   }
 
   void _scrollToBottom() {
@@ -178,14 +154,18 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _error = null;
     });
-    _connectSocket();
+    widget.manager.reconnect(
+      (isconn) => setState(() {
+        _isConnected = isconn;
+      })
+    );
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
-    _channel.sink.close();
+    widget.manager.popListener();
     super.dispose();
   }
 
