@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/model/ConversationInfo.dart';
+import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
+import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/model/jwttoken.dart';
@@ -31,15 +33,31 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   List<ConversationInfo> _conversations = [];
   bool _isLoading = false;
   String? _errorMessage;
-  
-  final Map<int, String> _lastMessages = {};
+  final ChatManager manager = ChatManager();
 
   @override
   void initState() {
     super.initState();
+    manager.setToken(widget.token);
+    manager.addListener(ChatListener(
+      newMessage: _lastMessageUpdate
+    ));
     _loadConversations();
   }
 
+  void _lastMessageUpdate(Message message) {
+    for (int i = 0; i < _conversations.length; i++) {
+      if (_conversations[i].id != message.conversationId) {
+        continue;
+      }
+      ConversationInfo conv = _conversations.removeAt(i);
+      conv.lastMessage = message.text;
+      conv.lastUpdate = DateTime.now();
+      _conversations.add(conv);
+      setState(() {});
+      return;
+    }
+  }
   Future<void> _loadConversations() async {
     setState(() {
       _isLoading = true;
@@ -121,6 +139,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           builder: (_) => ChatScreen(
             conversationId: conversationId,
             token: widget.token,
+            manager: manager,
           ),
         ),
       );
@@ -249,7 +268,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: _conversations.length,
       itemBuilder: (context, index) {
-        final info = _conversations[index];
+        final info = _conversations[_conversations.length - index - 1];
         final id = info.id;
 
         return ConversationCard(
@@ -262,6 +281,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 builder: (_) => ChatScreen(
                   conversationId: id,
                   token: widget.token,
+                  manager: manager,
                 ),
               ),
             );

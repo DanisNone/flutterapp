@@ -1,12 +1,10 @@
-import 'package:flutterapp/model/message.dart';
-
 class ConversationInfo {
   final int id;
   final List<(int, String)>? usersInfo;
-  final DateTime lastUpdate;
-  final String? lastMessage;
+  DateTime lastUpdate;
+  String? lastMessage;
 
-  const ConversationInfo({required this.id, required this.usersInfo, required this.lastUpdate, required this.lastMessage});
+  ConversationInfo({required this.id, required this.usersInfo, required this.lastUpdate, required this.lastMessage});
 
   factory ConversationInfo.fromJson(Map<String, dynamic> json) {
     List<(int, String)>? usersInfo;
