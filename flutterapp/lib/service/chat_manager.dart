@@ -43,10 +43,8 @@ class ChatManager {
         onError: _onError
       );
       _setConnection(true);
-      print("connection good");
     } catch (e) {
       _setConnection(false);
-      print("connection bad");
     }
   }
 
@@ -96,7 +94,6 @@ class ChatManager {
   }
 
   void dispose() {
-    print("chatmanager dispose");
     if (_isConnected) {
       _channel.sink.close();
     }
