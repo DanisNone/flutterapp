@@ -1,29 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:web_socket_channel/web_socket_channel.dart';
+
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/routes/all_routes.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatListener {
-  Function(bool)? _connection;
-  Function(Message)? _newMessage;
-  Function(dynamic)? _error;
-
-  Function(bool)? get connection => _connection;
-  Function(Message)? get newMessage => _newMessage;
-  Function(dynamic)? get error => _error;
+  final void Function(bool)? connection;
+  final void Function(Message)? newMessage;
+  final void Function(dynamic)? error;
 
   ChatListener({
-    Function(bool)? connection,
-    Function(Message)? newMessage,
-    Function(dynamic)? error,
-  }) {
-    _connection = connection;
-    _newMessage = newMessage;
-    _error = error;
-  }
+    this.connection,
+    this.newMessage,
+    this.error,
+  });
 }
 
 class ChatManager {
@@ -31,68 +24,97 @@ class ChatManager {
   bool _isConnected = false;
   final List<ChatListener> _listeners = [];
   JWTToken? _token;
-  
-  // Для автоматического reconnect
+
   Timer? _reconnectTimer;
   static const Duration _reconnectDelay = Duration(seconds: 3);
-  int _reconnectAttempts = 0;
   bool _isReconnecting = false;
   StreamSubscription? _channelSubscription;
 
   bool get isConnected => _isConnected;
 
+  /// Устанавливает токен и пытается подключиться
   void setToken(JWTToken token) {
+    if (_token == token && _isConnected) return;
     _token = token;
     _connect();
   }
 
-  void _connect() {
+  Future<void> _connect() async {
     if (_token == null) return;
-    
+    // Если уже подключены или подключение в процессе — не начинаем ещё одно
+    if (_channel != null) return;
+
     try {
-      _closeConnection();
-      
+      _cancelReconnectTimer();
       final uri = Uri.parse(webSocketUrl).replace(
         queryParameters: {"token": _token!.accessToken},
       );
-      
+
       _channel = WebSocketChannel.connect(uri);
+
+      // Подписываемся на данные
       _channelSubscription = _channel!.stream.listen(
         _onData,
         onError: _onError,
         onDone: _onDone,
         cancelOnError: true,
       );
-      
+
+      // Помечаем как подключённое и уведомляем слушателей
       _setConnection(true);
+      _isReconnecting = false;
     } catch (e) {
       _setConnection(false);
-      _scheduleReconnect();
+      _onError(e);
     }
   }
 
   void _setConnection(bool value) {
     if (_isConnected == value) return;
-    
+
     _isConnected = value;
-    for (var listener in _listeners) {
-      listener.connection?.call(value);
+    for (var listener in List<ChatListener>.from(_listeners)) {
+      try {
+        listener.connection?.call(value);
+      } catch (_) {
+        // Игнорируем исключения слушателей
+      }
     }
   }
 
   void _onData(dynamic response) {
     try {
-      Map<String, dynamic> decoded = jsonDecode(response);
-      if (decoded["type"] != "new_message") {
-        return; // TODO add logic
+      if (response == null) return;
+
+      Map<String, dynamic> decoded;
+      if (response is String) {
+        decoded = jsonDecode(response);
+      } else if (response is Map) {
+        decoded = Map<String, dynamic>.from(response);
+      } else {
+        // Нераспознанный формат
+        return;
       }
-      
-      Map<String, dynamic> data = decoded["data"];
-      data["message"]["conversation_id"] = data["conversation"]["id"] as int;
-      final message = Message.fromJson(data["message"]);
-      
-      for (var listener in _listeners) {
-        listener.newMessage?.call(message);
+
+      if (decoded["type"] != "new_message") {
+        // TODO: обработать другие типы
+        return;
+      }
+
+      final data = Map<String, dynamic>.from(decoded["data"] as Map);
+      final conversation = data["conversation"] as Map<String, dynamic>?;
+      final messageMap = Map<String, dynamic>.from(data["message"] as Map);
+
+      if (conversation != null && conversation.containsKey("id")) {
+        messageMap["conversation_id"] = conversation["id"];
+      }
+
+      final message = Message.fromJson(messageMap);
+
+      for (var listener in List<ChatListener>.from(_listeners)) {
+        try {
+          listener.newMessage?.call(message);
+        } catch (_) {}
       }
     } catch (e) {
       _onError(e);
@@ -101,86 +123,105 @@ class ChatManager {
 
   void _onError(dynamic error) {
     _setConnection(false);
-    
-    for (var listener in _listeners) {
-      listener.error?.call(error);
+
+    for (var listener in List<ChatListener>.from(_listeners)) {
+      try {
+        listener.error?.call(error);
+      } catch (_) {}
     }
-    
+
+    _closeChannel();
     _scheduleReconnect();
   }
 
   void _onDone() {
     _setConnection(false);
+    _closeChannel();
     _scheduleReconnect();
   }
 
   void _scheduleReconnect() {
     if (_isReconnecting) return;
-    
-    _reconnectTimer?.cancel();    
     _isReconnecting = true;
-    _reconnectAttempts++;
-    
-    _reconnectTimer = Timer(_reconnectDelay, () {
-      if (!_isConnected && _token != null) {
-        _connect();
-      }
+
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(_reconnectDelay, () async {
       _isReconnecting = false;
+      if (!_isConnected && _token != null) {
+        await _connect();
+        if (!_isConnected) {
+          _scheduleReconnect();
+        }
+      }
     });
   }
 
-  void reconnect(Function(bool) callback) {
-    // Отменяем текущий таймер и сбрасываем счетчик для ручного reconnect
+  void _cancelReconnectTimer() {
     _reconnectTimer?.cancel();
-    _reconnectAttempts = 0;
+    _reconnectTimer = null;
     _isReconnecting = false;
-    
+  }
+
+  Future<bool> reconnect() async {
+    _cancelReconnectTimer();
+    _isReconnecting = false;
+
+    // Закроем текущее, если есть
+    _closeChannel();
+
     if (_token != null) {
-      _connect();
+      await _connect();
     }
-    callback(_isConnected);
+
+    return _isConnected;
   }
 
   void sendMessage(int conversationId, String text) {
     if (!_isConnected || _channel == null) {
       return;
     }
-    
+
     try {
-      _channel!.sink.add(jsonEncode({
+      final payload = {
         "conversation_id": conversationId,
-        "text": text
-      }));
+        "text": text,
+      };
+      _channel!.sink.add(jsonEncode(payload));
     } catch (e) {
       _onError(e);
     }
   }
 
-  void _closeConnection() {
-    _reconnectTimer?.cancel();
-    _channelSubscription?.cancel();
-    
+  void _closeChannel() {
+    try {
+      _channelSubscription?.cancel();
+    } catch (_) {}
+    _channelSubscription = null;
+
     if (_channel != null) {
       try {
         _channel!.sink.close();
-      } catch (e) {
-        _onError(e);
-      }
+      } catch (_) {}
       _channel = null;
     }
+
+    _setConnection(false);
   }
 
-  void addListener(ChatListener callback) {
-    _listeners.add(callback);
+  void addListener(ChatListener listener) {
+    _listeners.add(listener);
+    try {
+      listener.connection?.call(_isConnected);
+    } catch (_) {}
   }
 
-  void removeListener(ChatListener callback) {
-    _listeners.remove(callback);
+  void removeListener(ChatListener listener) {
+    _listeners.remove(listener);
   }
 
   void dispose() {
-    _reconnectTimer?.cancel();
-    _closeConnection();
+    _cancelReconnectTimer();
+    _closeChannel();
     _listeners.clear();
     _isReconnecting = false;
   }

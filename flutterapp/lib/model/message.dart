@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 class Message {
-  final int id;
+  int? id;
   final String text;
   final int senderId;
-  final DateTime createdAt;
+  DateTime createdAt;
   final int conversationId;
 
   Message({

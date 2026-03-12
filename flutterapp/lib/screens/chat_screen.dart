@@ -16,14 +16,16 @@ import 'package:flutterapp/constants/app_dimensions.dart';
 
 class ChatScreen extends StatefulWidget {
   final int conversationId;
+  final int userId;
   final JWTToken token;
   final ChatManager manager;
 
   const ChatScreen({
     super.key,
     required this.conversationId,
+    required this.userId,
     required this.token,
-    required this.manager
+    required this.manager,
   });
 
   @override
@@ -37,7 +39,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isConnected = false;
   bool _isLoading = true;
   String? _error;
-  late ChatListener listener;
+  late ChatListener _listener;
 
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -45,42 +47,55 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    listener = ChatListener(
+    widget.manager.setToken(widget.token);
+
+    _listener = ChatListener(
       newMessage: _handleIncomingMessage,
       connection: (conn) {
-        if (!conn) _handleConnectionClosed();
+        if (!mounted) return;
+        setState(() {
+          _isConnected = conn;
+        });
       },
-      error: _handleConnectionError
+      error: _handleConnectionError,
     );
-    widget.manager.addListener(listener);
+
+    widget.manager.addListener(_listener);
+
     _init();
   }
 
-  Future<void> _init() async {
-    try {
-      final user = await getUser(widget.token);
-      final history = await getConversationMessages(
-        widget.conversationId,
-        widget.token,
-      );
+  Future<void> _init() async 
+  {
+    late User user;
+    late List<Message> history;
+    while (true) {
+      try {
+        user = await getUser(widget.token);
+        history = await getConversationMessages(
+          widget.conversationId,
+          widget.token,
+        );
+        break;
+      } catch (e) {
+        if (!mounted) return;
 
-      if (!mounted) return;
-
-      setState(() {
-        _user = user;
-        _messages = history;
-        _isLoading = false;
-        _isConnected = true;
-      });
-      _scrollToBottom();
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _error = 'Ошибка загрузки: $e';
-        _isLoading = false;
-      });
+        setState(() {
+          _error = 'Ошибка загрузки: $e';
+        });
+      }
     }
+
+    if (!mounted) return;
+
+    setState(() {
+      _user = user;
+      _messages = history;
+      _isLoading = false;
+      // Берём реальное состояние менеджера
+      _isConnected = widget.manager.isConnected;
+    });
+    _scrollToBottom();
   }
 
   void _handleIncomingMessage(Message message) {
@@ -89,7 +104,23 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (message.conversationId == widget.conversationId) {
         setState(() {
-          _messages.add(message);
+          if (message.senderId != _user!.id) {
+            _messages.add(message);
+          }
+          else {
+            bool find = false;
+            for (var userMessage in _messages) {
+              if (userMessage.id == null && userMessage.text == message.text) {
+                userMessage.id = message.id;
+                userMessage.createdAt = message.createdAt;
+                find = true;
+                break;
+              }
+            }
+            if (!find) {
+              _messages.add(message);
+            }
+          }
         });
 
         _scrollToBottom();
@@ -99,52 +130,41 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _handleConnectionClosed() {
-    if (mounted) {
-      setState(() => _isConnected = false);
-      
-      // Показываем уведомление о разрыве соединения
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Соединение разорвано'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      
-      widget.manager.reconnect(
-        (isconn) => setState(() {
-          _isConnected = isconn;
-        })
-      );
-    }
-  }
-
   void _handleConnectionError(error) {
-    if (mounted) {
-      setState(() {
-        _isConnected = false;
-        _error = 'Ошибка сокета: $error';
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _isConnected = false;
+      _error = 'Ошибка сокета: $error';
+    });
   }
 
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty || !_isConnected) return;
+    setState(() {
+      _messages.add(Message(
+        id: null,
+        text: text,
+        senderId: widget.userId,
+        createdAt: DateTime.now().toUtc(),
+        conversationId: widget.conversationId
+      ));
+    });
+
     widget.manager.sendMessage(
       widget.conversationId,
-      text
+      text,
     );
-    _controller.clear();
 
+    _controller.clear();
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
+        final max = _scrollController.position.maxScrollExtent;
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          max,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -153,21 +173,24 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _tryReconnect() {
+    if (!mounted) return;
     setState(() {
       _error = null;
     });
-    widget.manager.reconnect(
-      (isconn) => setState(() {
+
+    widget.manager.reconnect().then((isconn) {
+      if (!mounted) return;
+      setState(() {
         _isConnected = isconn;
-      })
-    );
+      });
+    });
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
-    widget.manager.removeListener(listener);
+    widget.manager.removeListener(_listener);
     super.dispose();
   }
 
@@ -239,9 +262,10 @@ class _ChatScreenState extends State<ChatScreen> {
         itemCount: _messages.length,
         itemBuilder: (context, index) {
           final message = _messages[index];
-          final isMine = message.senderId == _user!.id;
+          final isMine = _user != null && message.senderId == _user!.id;
 
           return MessageBubble(
+            isSended: message.id != null,
             text: message.text,
             isMine: isMine,
             timestamp: message.createdAt,
