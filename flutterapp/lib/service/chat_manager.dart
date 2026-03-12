@@ -43,6 +43,7 @@ class ChatManager {
 
   Future<void> _connect() async {
     if (_token == null) return;
+    await _token!.updateToken();
     if (_channel != null) return;
 
     try {

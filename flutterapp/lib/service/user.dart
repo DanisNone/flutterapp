@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 
 Future<User> getUser(JWTToken token) async {
+  await token.updateToken();
   final res = await http.get(
     Uri.parse(meUrl),
     headers: {
