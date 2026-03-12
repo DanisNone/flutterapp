@@ -5,15 +5,17 @@ import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/utils/responsive.dart';
 
 class MessageBubble extends StatelessWidget {
+  final bool isSended;
   final String text;
   final bool isMine;
-  final DateTime? timestamp;
+  final DateTime timestamp;
   
   const MessageBubble({
     super.key,
+    required this.isSended,
     required this.text,
     required this.isMine,
-    this.timestamp,
+    required this.timestamp,
   });
   
   @override
@@ -39,18 +41,33 @@ class MessageBubble extends StatelessWidget {
               text,
               style: isMine ? AppTextStyles.myMessage : AppTextStyles.theirMessage,
             ),
-            if (timestamp != null) ...[
-              const SizedBox(height: AppDimensions.paddingXS),
-              Text(
-                _formatTime(timestamp!),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isMine
-                      ? Colors.white.withOpacity(0.7)
-                      : AppColors.textSecondary.withOpacity(0.7),
+            const SizedBox(height: AppDimensions.paddingXS),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _formatTime(timestamp),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isMine
+                        ? Colors.white.withOpacity(0.7)
+                        : AppColors.textSecondary.withOpacity(0.7),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 4),
+                if (!isSended)
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isMine ? Colors.white : AppColors.textSecondary,
+                      ),
+                    ),
+                  )
+              ],
+            )
           ],
         ),
       ),

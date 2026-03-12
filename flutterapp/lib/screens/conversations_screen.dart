@@ -50,17 +50,17 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       if (_conversations[i].id != message.conversationId) {
         continue;
       }
-      ConversationInfo conv = _conversations.removeAt(i);
-      conv.lastMessage = message.text;
-      conv.lastUpdate = DateTime.now();
-      _conversations.insert(0, conv);
-      setState(() {});
-      return;
+        ConversationInfo conv = _conversations.removeAt(i);
+        conv.lastMessage = message.text;
+        conv.lastUpdate = DateTime.now().toUtc();
+        _conversations.insert(0, conv);
+        setState(() {});
+        return;
+      }
     }
-  }
-  Future<void> _loadConversations() async {
-    setState(() {
-      _isLoading = true;
+    Future<void> _loadConversations() async {
+      setState(() {
+        _isLoading = true;
       _errorMessage = null;
     });
 
@@ -144,6 +144,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         MaterialPageRoute(
           builder: (_) => ChatScreen(
             conversationId: conversationId,
+            userId: _user!.id,
             token: widget.token,
             manager: manager,
           ),
@@ -286,6 +287,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
               MaterialPageRoute(
                 builder: (_) => ChatScreen(
                   conversationId: id,
+                  userId: _user!.id,
                   token: widget.token,
                   manager: manager,
                 ),
