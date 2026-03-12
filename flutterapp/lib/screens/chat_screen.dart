@@ -7,10 +7,8 @@ import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/widgets/common/empty_state.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
-import 'package:flutterapp/widgets/common/error_view.dart';
 import 'package:flutterapp/widgets/chat/message_bubble.dart';
 import 'package:flutterapp/widgets/chat/chat_input.dart';
-import 'package:flutterapp/widgets/common/connection_status.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 
@@ -35,10 +33,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   User? _user;
   List<Message> _messages = [];
-
-  bool _isConnected = false;
   bool _isLoading = true;
-  String? _error;
   late ChatListener _listener;
 
   final TextEditingController _controller = TextEditingController();
@@ -51,13 +46,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _listener = ChatListener(
       newMessage: _handleIncomingMessage,
-      connection: (conn) {
-        if (!mounted) return;
-        setState(() {
-          _isConnected = conn;
-        });
-      },
-      error: _handleConnectionError,
     );
 
     widget.manager.addListener(_listener);
@@ -79,10 +67,6 @@ class _ChatScreenState extends State<ChatScreen> {
         break;
       } catch (e) {
         if (!mounted) return;
-
-        setState(() {
-          _error = 'Ошибка загрузки: $e';
-        });
       }
     }
 
@@ -92,8 +76,6 @@ class _ChatScreenState extends State<ChatScreen> {
       _user = user;
       _messages = history;
       _isLoading = false;
-      // Берём реальное состояние менеджера
-      _isConnected = widget.manager.isConnected;
     });
     _scrollToBottom();
   }
@@ -130,17 +112,17 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _handleConnectionError(error) {
-    if (!mounted) return;
-    setState(() {
-      _isConnected = false;
-      _error = 'Ошибка сокета: $error';
-    });
-  }
-
   void _sendMessage() {
     final text = _controller.text.trim();
-    if (text.isEmpty || !_isConnected) return;
+    if (text.isEmpty) return;
+    if (!widget.manager.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Нет соединения с сервером'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
     setState(() {
       _messages.add(Message(
         id: null,
@@ -172,20 +154,6 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  void _tryReconnect() {
-    if (!mounted) return;
-    setState(() {
-      _error = null;
-    });
-
-    widget.manager.reconnect().then((isconn) {
-      if (!mounted) return;
-      setState(() {
-        _isConnected = isconn;
-      });
-    });
-  }
-
   @override
   void dispose() {
     _controller.dispose();
@@ -198,27 +166,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Чат #${widget.conversationId}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            ConnectionStatus(isConnected: _isConnected),
-          ],
-        ),
         elevation: 0,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        actions: [
-          if (!_isConnected)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _tryReconnect,
-              tooltip: 'Переподключиться',
-            ),
-        ],
       ),
       body: Column(
         children: [
@@ -227,8 +177,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ChatInput(
             controller: _controller,
-            onSend: _sendMessage,
-            isConnected: _isConnected,
+            onSend: _sendMessage
           ),
         ],
       ),
@@ -238,13 +187,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildBody() {
     if (_isLoading) {
       return const LoadingIndicator(message: 'Загрузка сообщений...');
-    }
-
-    if (_error != null) {
-      return ErrorView(
-        error: _error!,
-        onRetry: _tryReconnect,
-      );
     }
 
     if (_messages.isEmpty) {

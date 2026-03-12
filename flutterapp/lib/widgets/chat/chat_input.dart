@@ -5,13 +5,11 @@ import 'package:flutterapp/constants/app_dimensions.dart';
 class ChatInput extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
-  final bool isConnected;
   
   const ChatInput({
     super.key,
     required this.controller,
     required this.onSend,
-    required this.isConnected,
   });
   
   @override
@@ -38,9 +36,7 @@ class ChatInput extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 decoration: InputDecoration(
-                  hintText: isConnected
-                      ? 'Введите сообщение...'
-                      : 'Ожидание подключения...',
+                  hintText: 'Введите сообщение...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppDimensions.radiusM),
                   ),
@@ -52,18 +48,17 @@ class ChatInput extends StatelessWidget {
                   ),
                 ),
                 minLines: 1,
-                maxLines: 4,
-                enabled: isConnected,
+                maxLines: 4
               ),
             ),
             const SizedBox(width: AppDimensions.paddingS),
             Container(
               decoration: BoxDecoration(
-                color: isConnected ? AppColors.primary : Colors.grey,
+                color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                onPressed: isConnected ? onSend : null,
+                onPressed: onSend,
                 icon: const Icon(Icons.send, color: Colors.white),
               ),
             ),
