@@ -1,9 +1,11 @@
 const String baseUrl = "https://gubajdullindanis0.fvds.ru";
 const String api_v1 = "$baseUrl/api/v1";
-const String registerUrl = "$api_v1/auth/register";
-const String authUrl = "$api_v1/auth/login";
-const String meUrl = "$api_v1/auth/me";
-const String logoutUrl = "$api_v1/logout";
+const String apiAuth = "$api_v1/auth";
+const String registerUrl = "$apiAuth/register";
+const String authUrl = "$apiAuth/login";
+const String meUrl = "$apiAuth/me";
+const String logoutUrl = "$apiAuth/logout";
+const String refreshUrl = "$apiAuth/refresh";
 
 const String usersUrl = "$api_v1/users";
 

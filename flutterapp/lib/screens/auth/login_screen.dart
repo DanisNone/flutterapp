@@ -34,29 +34,20 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // Получаем сохраненный токен
       final JWTToken? token = await SecureStorageService().getJWTToken();
-      
-      if (token != null) {
-        // Проверяем валидность токена, пытаясь получить данные пользователя
-        try {
-          await getUser(token);
-          
-          // Если запрос успешен, переходим на следующий экран
-          if (!mounted) return;
-          
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ConversationsScreen(token: token),
-            ),
-          );
-          return;
-        } catch (e) {
-          // Токен невалидный - удаляем его и остаемся на экране входа
-          await SecureStorageService().deleteJWTToken();
-        }
+      if (token != null && await token.updateToken()) {
+        if (!mounted) return;
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ConversationsScreen(token: token),
+          ),
+        );
+        return;
+      } else {
+        //await SecureStorageService().deleteJWTToken();
       }
     } catch (e) {
-      // Ошибка при проверке токена - просто остаемся на экране входа
       debugPrint('Ошибка при проверке токена: $e');
     } finally {
       if (mounted) {
