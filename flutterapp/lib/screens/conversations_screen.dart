@@ -53,7 +53,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       ConversationInfo conv = _conversations.removeAt(i);
       conv.lastMessage = message.text;
       conv.lastUpdate = DateTime.now();
-      _conversations.add(conv);
+      _conversations.insert(0, conv);
       setState(() {});
       return;
     }
@@ -274,7 +274,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: _conversations.length,
       itemBuilder: (context, index) {
-        final info = _conversations[_conversations.length - index - 1];
+        final info = _conversations[index];
         final id = info.id;
 
         return ConversationCard(
