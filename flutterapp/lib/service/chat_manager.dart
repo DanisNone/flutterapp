@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:flutterapp/model/jwttoken.dart';
@@ -23,6 +24,7 @@ class ChatManager {
   WebSocketChannel? _channel;
   bool _isConnected = false;
   final List<ChatListener> _listeners = [];
+  final List<(int, String)> _messagesQueue = [];
   JWTToken? _token;
 
   Timer? _reconnectTimer;
@@ -41,7 +43,6 @@ class ChatManager {
 
   Future<void> _connect() async {
     if (_token == null) return;
-    // Если уже подключены или подключение в процессе — не начинаем ещё одно
     if (_channel != null) return;
 
     try {
@@ -50,18 +51,17 @@ class ChatManager {
         queryParameters: {"token": _token!.accessToken},
       );
 
+      _isConnected = true;
       _channel = WebSocketChannel.connect(uri);
-
-      // Подписываемся на данные
+      await _channel!.ready;
       _channelSubscription = _channel!.stream.listen(
         _onData,
         onError: _onError,
         onDone: _onDone,
         cancelOnError: true,
       );
-
-      // Помечаем как подключённое и уведомляем слушателей
-      _setConnection(true);
+  
+      _setConnection(_isConnected);
       _isReconnecting = false;
     } catch (e) {
       _setConnection(false);
@@ -70,8 +70,7 @@ class ChatManager {
   }
 
   void _setConnection(bool value) {
-    if (_isConnected == value) return;
-
+    if (value) _sendMessage();
     _isConnected = value;
     for (var listener in List<ChatListener>.from(_listeners)) {
       try {
@@ -176,20 +175,27 @@ class ChatManager {
     return _isConnected;
   }
 
+  void _sendMessage() {
+    while (_messagesQueue.isNotEmpty) {
+      try {
+        if (!_isConnected || _channel == null) {
+          break;
+        }
+        final payload = {
+          "conversation_id": _messagesQueue.first.$1,
+          "text": _messagesQueue.first.$2,
+        };
+        _channel!.sink.add(jsonEncode(payload));
+        _messagesQueue.removeAt(0);
+      } catch (e) {
+        _onError(e);
+        break;
+      }
+    }
+  }
   void sendMessage(int conversationId, String text) {
-    if (!_isConnected || _channel == null) {
-      return;
-    }
-
-    try {
-      final payload = {
-        "conversation_id": conversationId,
-        "text": text,
-      };
-      _channel!.sink.add(jsonEncode(payload));
-    } catch (e) {
-      _onError(e);
-    }
+    _messagesQueue.add((conversationId, text));
+    _sendMessage();
   }
 
   void _closeChannel() {
