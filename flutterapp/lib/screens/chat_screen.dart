@@ -37,6 +37,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isConnected = false;
   bool _isLoading = true;
   String? _error;
+  late ChatListener listener;
 
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -44,13 +45,14 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    widget.manager.addListener(ChatListener(
+    listener = ChatListener(
       newMessage: _handleIncomingMessage,
       connection: (conn) {
         if (!conn) _handleConnectionClosed();
       },
       error: _handleConnectionError
-    ));
+    );
+    widget.manager.addListener(listener);
     _init();
   }
 
@@ -165,7 +167,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
-    widget.manager.popListener();
+    widget.manager.removeListener(listener);
     super.dispose();
   }
 
