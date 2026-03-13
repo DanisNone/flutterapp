@@ -43,10 +43,10 @@ class ChatManager {
 
   Future<void> _connect() async {
     if (_token == null) return;
-    await _token!.updateToken();
     if (_channel != null) return;
 
     try {
+      await _token!.updateToken();
       _cancelReconnectTimer();
       final uri = Uri.parse(webSocketUrl).replace(
         queryParameters: {"token": _token!.accessToken},
