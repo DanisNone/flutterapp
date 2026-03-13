@@ -1,10 +1,11 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/user.dart';
-import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/widgets/common/empty_state.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/chat/message_bubble.dart';
@@ -32,7 +33,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   User? _user;
-  List<Message> _messages = [];
+  final SplayTreeSet<Message> _messages = SplayTreeSet((m1,m2) => m1.createdAt.compareTo(m2.createdAt));
   bool _isLoading = true;
   late ChatListener _listener;
 
@@ -47,6 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _listener = ChatListener(
       newMessage: _handleIncomingMessage,
     );
+    _scrollController.addListener(_onScroll);
 
     widget.manager.addListener(_listener);
 
@@ -56,13 +58,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _init() async 
   {
     late User user;
-    late List<Message> history;
     while (true) {
       try {
         user = await getUser(widget.token);
-        history = await getConversationMessages(
-          widget.conversationId,
-          widget.token,
+        widget.manager.loadLast(
+          widget.conversationId
         );
         break;
       } catch (e) {
@@ -74,13 +74,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       _user = user;
-      _messages = history;
       _isLoading = false;
     });
     _scrollToBottom();
   }
 
-  void _handleIncomingMessage(Message message) {
+  void _handleIncomingMessage(Message message, bool isNew) {
     try {
       if (!mounted) return;
 
@@ -104,7 +103,6 @@ class _ChatScreenState extends State<ChatScreen> {
             }
           }
         });
-        if (message.senderId == _user!.id) _scrollToBottom();
       }
     } catch (e) {
       debugPrint('Error parsing message: $e');
@@ -153,9 +151,19 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void _onScroll() {
+    if (_scrollController.position.pixels <=
+        _scrollController.position.minScrollExtent + 50) {
+      if (_messages.isNotEmpty) {
+        final oldestMessage = _messages.first;
+        widget.manager.loadBefore(oldestMessage);
+      }
+    }
+  }
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     widget.manager.removeListener(_listener);
     super.dispose();
@@ -195,24 +203,80 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
+    final messagesList = _messages.toList();
+
     return Container(
       color: Colors.grey.shade50,
       child: ListView.builder(
         controller: _scrollController,
+        reverse: true, // инвертируем прокрутку
         padding: const EdgeInsets.all(AppDimensions.paddingL),
-        itemCount: _messages.length,
+        itemCount: messagesList.length,
         itemBuilder: (context, index) {
-          final message = _messages[index];
+          // Теперь index=0 — самое новое сообщение
+          final message = messagesList[messagesList.length - 1 - index];
           final isMine = _user != null && message.senderId == _user!.id;
 
-          return MessageBubble(
-            isSended: message.id != null,
-            text: message.text,
-            isMine: isMine,
-            timestamp: message.createdAt,
+          // Проверяем, нужно ли вставить разделитель с датой
+          bool showDateHeader = false;
+          if (index == messagesList.length - 1) { // первый сверху (самое старое)
+            showDateHeader = true;
+          } else {
+            final previousMessage = messagesList[messagesList.length - index - 2];
+            if (!_isSameDay(previousMessage.createdAt, message.createdAt)) {
+              showDateHeader = true;
+            }
+          }
+
+          List<Widget> children = [];
+          if (showDateHeader) {
+            children.add(
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Center(
+                  child: Text(
+                    _formatDate(message.createdAt),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          children.add(
+            MessageBubble(
+              isSended: message.id != null,
+              text: message.text,
+              isMine: isMine,
+              timestamp: message.createdAt,
+            ),
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
           );
         },
       ),
     );
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    if (messageDate == today) return 'Сегодня';
+    if (messageDate == today.subtract(const Duration(days: 1))) return 'Вчера';
+
+    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 }

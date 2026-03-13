@@ -13,5 +13,5 @@ const String getConversationsUrl = "$api_v1/get_conversations";
 const String getOrCreateDialogUrl = "$api_v1/get_or_create_dialog";
 const String getAllMessageUrl = "$api_v1/get_all_message";
 
-const String webSocketUrl = "wss://gubajdullindanis0.fvds.ru/api/v1/ws/";
+const String webSocketUrl = "wss://gubajdullindanis0.fvds.ru/api/v1/ws2/";
 
