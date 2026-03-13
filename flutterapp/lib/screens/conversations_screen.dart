@@ -45,19 +45,21 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     _loadConversations();
   }
 
-  void _lastMessageUpdate(Message message) {
+  void _lastMessageUpdate(Message message, bool isNew) {
+    if (!isNew) return;
+
     for (int i = 0; i < _conversations.length; i++) {
       if (_conversations[i].id != message.conversationId) {
         continue;
       }
-        ConversationInfo conv = _conversations.removeAt(i);
-        conv.lastMessage = message.text;
-        conv.lastUpdate = DateTime.now().toUtc();
-        _conversations.insert(0, conv);
-        setState(() {});
-        return;
-      }
+      ConversationInfo conv = _conversations.removeAt(i);
+      conv.lastMessage = message.text;
+      conv.lastUpdate = DateTime.now().toUtc();
+      _conversations.insert(0, conv);
+      setState(() {});
+      return;
     }
+  }
     Future<void> _loadConversations() async {
       setState(() {
         _isLoading = true;

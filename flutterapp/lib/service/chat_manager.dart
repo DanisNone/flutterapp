@@ -10,7 +10,7 @@ import 'package:flutterapp/routes/all_routes.dart';
 
 class ChatListener {
   final void Function(bool)? connection;
-  final void Function(Message)? newMessage;
+  final void Function(Message, bool)? newMessage;
   final void Function(dynamic)? error;
 
   ChatListener({
@@ -82,6 +82,53 @@ class ChatManager {
     }
   }
 
+  void loadLast(
+    int conversationId
+  ) async {
+    _connect();
+
+    final payload = {
+      "type": "get_messages",
+      "data": {
+        "conversation_id": conversationId,
+        "last_message_date": DateTime.now().toUtc().toString(),
+      }
+    };
+    _channel!.sink.add(jsonEncode(payload));
+  }
+
+  void loadBefore(
+    Message message
+  ) async {
+    _connect();
+
+    final payload = {
+      "type": "get_messages",
+      "data": {
+        "conversation_id": message.conversationId,
+        "last_message_date": message.createdAt.toString(),
+      }
+    };
+    _channel!.sink.add(jsonEncode(payload));
+  }
+
+  void _addMessage(Map<String, dynamic> data) {
+    final conversation = data["conversation"] as Map<String, dynamic>?;
+    final messageMap = Map<String, dynamic>.from(data["message"] as Map);
+
+    if (conversation != null && conversation.containsKey("id")) {
+      messageMap["conversation_id"] = conversation["id"];
+    }
+
+    final message = Message.fromJson(messageMap);
+
+    for (var listener in List<ChatListener>.from(_listeners)) {
+      try {
+        listener.newMessage?.call(message, true);
+      } catch (_) {}
+    }
+  }
+
   void _onData(dynamic response) {
     try {
       if (response == null) return;
@@ -92,31 +139,28 @@ class ChatManager {
       } else if (response is Map) {
         decoded = Map<String, dynamic>.from(response);
       } else {
-        // Нераспознанный формат
         return;
       }
 
-      if (decoded["type"] != "new_message") {
-        // TODO: обработать другие типы
-        return;
+      if (decoded["type"] == "new_message") {
+        final data = Map<String, dynamic>.from(decoded["data"] as Map);
+        _addMessage(data);
+      } else if (decoded["type"] == "messages") {
+        final data = List<Map<String, dynamic>>.from(decoded["data"] as List);
+        final messages = data.map(Message.fromJson);
+        for (var message in  messages) {
+          for (var listener in List<ChatListener>.from(_listeners)) {
+            try {
+              listener.newMessage?.call(message, false);
+            } catch (_) {}
+          }
+        }
+      } else {
+        throw Exception("unknown websocket answer type: ${decoded["type"]}");
       }
-
-      final data = Map<String, dynamic>.from(decoded["data"] as Map);
-      final conversation = data["conversation"] as Map<String, dynamic>?;
-      final messageMap = Map<String, dynamic>.from(data["message"] as Map);
-
-      if (conversation != null && conversation.containsKey("id")) {
-        messageMap["conversation_id"] = conversation["id"];
-      }
-
-      final message = Message.fromJson(messageMap);
-
-      for (var listener in List<ChatListener>.from(_listeners)) {
-        try {
-          listener.newMessage?.call(message);
-        } catch (_) {}
-      }
-    } catch (e) {
+      
+    }
+    catch (e) {
       _onError(e);
     }
   }
@@ -183,8 +227,11 @@ class ChatManager {
           break;
         }
         final payload = {
-          "conversation_id": _messagesQueue.first.$1,
-          "text": _messagesQueue.first.$2,
+          "type": "send_message",
+          "data": {
+            "conversation_id": _messagesQueue.first.$1,
+            "text": _messagesQueue.first.$2,
+          }
         };
         _channel!.sink.add(jsonEncode(payload));
         _messagesQueue.removeAt(0);
