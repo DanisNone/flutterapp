@@ -104,8 +104,7 @@ class _ChatScreenState extends State<ChatScreen> {
             }
           }
         });
-
-        _scrollToBottom();
+        if (message.senderId == _user!.id) _scrollToBottom();
       }
     } catch (e) {
       debugPrint('Error parsing message: $e');
