@@ -152,8 +152,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels <=
-        _scrollController.position.minScrollExtent + 50) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 50) {
       if (_messages.isNotEmpty) {
         final oldestMessage = _messages.first;
         widget.manager.loadBefore(oldestMessage);
