@@ -124,13 +124,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         gradient: const LinearGradient(
                           colors: [AppColors.primary, AppColors.glow],
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.5),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                          ),
-                        ],
                       ),
                       child: const Icon(
                         Icons.chat_bubble,
@@ -143,12 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Вход',
                       style: AppTextStyles.headline2.copyWith(
                         color: AppColors.glow,
-                        shadows: [
-                          Shadow(
-                            color: AppColors.primary.withValues(alpha: 0.8),
-                            blurRadius: 20,
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(height: 8),

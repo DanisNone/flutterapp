@@ -110,13 +110,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             AppColors.secondaryLight,
                           ],
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.secondary.withValues(alpha: 0.5),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                          ),
-                        ],
                       ),
                       child: const Icon(
                         Icons.person_add,
@@ -129,12 +122,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       'Регистрация',
                       style: AppTextStyles.headline2.copyWith(
                         color: AppColors.secondaryLight,
-                        shadows: [
-                          Shadow(
-                            color: AppColors.secondary.withValues(alpha: 0.8),
-                            blurRadius: 20,
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(height: 8),

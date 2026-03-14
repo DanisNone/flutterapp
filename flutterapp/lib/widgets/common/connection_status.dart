@@ -18,14 +18,6 @@ class ConnectionStatus extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isConnected ? AppColors.online : AppColors.offline,
-            boxShadow: [
-              BoxShadow(
-                color: (isConnected ? AppColors.online : AppColors.offline)
-                    .withValues(alpha: 0.5),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-            ],
           ),
         ),
         const SizedBox(width: 8),

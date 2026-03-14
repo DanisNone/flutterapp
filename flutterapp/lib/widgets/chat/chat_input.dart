@@ -172,15 +172,6 @@ class _ChatInputState extends State<ChatInput> {
                       ),
                 color: _isExceedingLimit ? AppColors.textMuted : null,
                 shape: BoxShape.circle,
-                boxShadow: _isExceedingLimit
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          spreadRadius: 2,
-                        ),
-                      ],
               ),
               child: IconButton(
                 onPressed: _isExceedingLimit ? null : _handleSubmitted,

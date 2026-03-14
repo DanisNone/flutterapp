@@ -101,13 +101,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           end: Alignment.bottomRight,
         ),
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.5),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
         border: Border.all(
           color: AppColors.borderGlow,
           width: 2,
@@ -144,13 +137,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               : [AppColors.primary, AppColors.primaryLight],
         ),
         borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
-        boxShadow: [
-          BoxShadow(
-            color: (isAdmin ? AppColors.warning : AppColors.primary).withValues(alpha: 0.4),
-            blurRadius: 12,
-            spreadRadius: 2,
-          ),
-        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -345,13 +331,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 15,
-            spreadRadius: 2,
-          ),
-        ],
       ),
       child: ElevatedButton.icon(
         onPressed: onPressed,

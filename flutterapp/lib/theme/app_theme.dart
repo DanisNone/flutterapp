@@ -244,20 +244,6 @@ class NeonButton extends StatelessWidget {
         gradient: const LinearGradient(
           colors: [AppColors.primary, AppColors.primaryLight],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.4),
-            blurRadius: 20,
-            spreadRadius: 2,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: AppColors.glow.withValues(alpha: 0.2),
-            blurRadius: 40,
-            spreadRadius: 4,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Material(
         color: Colors.transparent,

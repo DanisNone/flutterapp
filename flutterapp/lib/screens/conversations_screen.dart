@@ -202,13 +202,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                   colors: [AppColors.primary, AppColors.primaryLight],
                 ),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ],
               ),
               child: const Icon(
                 Icons.person,
@@ -263,13 +256,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 colors: [AppColors.primary, AppColors.primaryLight],
               ),
               borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
             ),
             child: Text(
               '${_conversations!.length}',
@@ -355,13 +341,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         floatingActionButton: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppDimensions.radiusCircle),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.5),
-                blurRadius: 20,
-                spreadRadius: 4,
-              ),
-            ],
           ),
           child: FloatingActionButton(
             onPressed: _openCreateConversationSheet,

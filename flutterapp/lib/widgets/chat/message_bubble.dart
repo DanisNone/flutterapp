@@ -40,22 +40,6 @@ class MessageBubble extends StatelessWidget {
               : null,
           color: isMine ? null : AppColors.theirMessage,
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          boxShadow: isMine
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

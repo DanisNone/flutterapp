@@ -38,13 +38,6 @@ class ConversationCard extends StatelessWidget {
               end: Alignment.bottomRight,
             ),
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 12,
-                spreadRadius: 2,
-              ),
-            ],
           ),
           child: Center(
             child: Text(

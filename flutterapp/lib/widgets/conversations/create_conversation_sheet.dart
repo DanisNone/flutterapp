@@ -38,12 +38,6 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
               'Новая переписка',
               style: AppTextStyles.headline3.copyWith(
                 color: AppColors.glow,
-                shadows: [
-                  Shadow(
-                    color: AppColors.primary.withValues(alpha: 0.5),
-                    blurRadius: 10,
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: AppDimensions.paddingL),
