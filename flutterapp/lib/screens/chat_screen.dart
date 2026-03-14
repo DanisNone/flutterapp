@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user.dart';
@@ -190,6 +191,48 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  void _showMessageOptions(BuildContext context, Message message) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.copy),
+                title: const Text('Копировать'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _copyMessage(message);
+                },
+              ),
+              if (message.senderId == _user?.id) // только свои сообщения можно удалять
+                ListTile(
+                  leading: const Icon(Icons.delete),
+                  title: const Text('Удалить'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _deleteMessage(message);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _copyMessage(Message message) {
+    Clipboard.setData(ClipboardData(text: message.text));
+  }
+
+  Future<void> _deleteMessage(Message message) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Это не реализовано')),
+    );
+  }
+
   Widget _buildBody() {
     if (_isLoading) {
       return const LoadingIndicator(message: 'Загрузка сообщений...');
@@ -245,13 +288,15 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             );
           }
-
           children.add(
-            MessageBubble(
-              isSended: message.id != null,
-              text: message.text,
-              isMine: isMine,
-              timestamp: message.createdAt,
+            GestureDetector(
+              onLongPress: () => _showMessageOptions(context, message),
+              child: MessageBubble(
+                isSended: message.id != null,
+                text: message.text,
+                isMine: isMine,
+                timestamp: message.createdAt,
+              ),
             ),
           );
 
