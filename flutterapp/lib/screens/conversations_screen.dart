@@ -112,7 +112,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => GlassContainer(
+      builder: (context) => MyContainer(
         borderRadius: 24,
         opacity: 0.08,
         border: Border.all(color: AppColors.borderGlow, width: 1.5),
@@ -188,7 +188,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           ),
         );
       },
-      child: GlassContainer(
+      child: MyContainer(
         padding: const EdgeInsets.all(AppDimensions.paddingM),
         borderRadius: 16,
         opacity: 0.06,

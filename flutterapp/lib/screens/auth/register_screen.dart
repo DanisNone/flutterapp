@@ -90,7 +90,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           return Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: GlassContainer(
+              child: MyContainer(
                 width: isMobile ? double.infinity : 420,
                 padding: const EdgeInsets.all(32),
                 borderRadius: 20,

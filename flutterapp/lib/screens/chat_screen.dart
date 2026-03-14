@@ -191,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> {
           elevation: 0,
           backgroundColor: Colors.transparent,
           foregroundColor: AppColors.textPrimary,
-          title: GlassContainer(
+          title: MyContainer(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             borderRadius: 12,
             opacity: 0.04,
@@ -217,7 +217,7 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return GlassContainer(
+        return MyContainer(
           borderRadius: 24,
           opacity: 0.08,
           border: Border.all(color: AppColors.borderGlow, width: 1.5),
@@ -313,7 +313,7 @@ class _ChatScreenState extends State<ChatScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
-                  child: GlassContainer(
+                  child: MyContainer(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 6,

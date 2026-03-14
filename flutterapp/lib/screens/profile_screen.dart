@@ -168,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     TextEditingController? controller,
     int maxLines = 1,
   }) {
-    return GlassContainer(
+    return MyContainer(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       borderRadius: 16,
       opacity: 0.06,

@@ -21,7 +21,7 @@ class ConversationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     String name = info.getName(currentUserId);
 
-    return GlassContainer(
+    return MyContainer(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
       borderRadius: AppDimensions.radiusL,
       opacity: 0.04,
