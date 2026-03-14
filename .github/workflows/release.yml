@@ -1,29 +1,35 @@
 name: Flutter Release
 
+# Триггер на пуш тегов вида v1, v2, ...
 on:
   push:
     tags:
-      - 'v*'  # запускается на любом теге вида v1, v2, ...
+      - 'v*'
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
 
     steps:
+    # 1. Клонируем репозиторий
     - name: Checkout code
       uses: actions/checkout@v3
 
+    # 2. Устанавливаем Flutter
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: 'stable'
+        flutter-version: stable
 
+    # 3. Устанавливаем зависимости
     - name: Install dependencies
       run: flutter pub get
 
+    # 4. Собираем релиз APK
     - name: Build APK
       run: flutter build apk --release
 
+    # 5. Создаём релиз на GitHub
     - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
@@ -35,7 +41,8 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset
+    # 6. Загружаем APK в релиз
+    - name: Upload APK
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
