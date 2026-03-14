@@ -161,7 +161,7 @@ class AppTheme {
   }
 }
 
-// Glass container widget for reuse
+// container widget for reuse
 class MyContainer extends StatelessWidget {
   final Widget child;
   final double? width;
