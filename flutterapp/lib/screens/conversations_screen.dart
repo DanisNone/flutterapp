@@ -34,7 +34,7 @@ class ConversationsScreen extends StatefulWidget {
 
 class _ConversationsScreenState extends State<ConversationsScreen> {
   User? _user;
-  List<ConversationInfo> _conversations = [];
+  List<ConversationInfo>? _conversations;
   bool _isLoading = false;
   String? _errorMessage;
   final ChatManager manager = ChatManager();
@@ -55,25 +55,25 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   }
 
   void _lastMessageUpdate(Message message, bool isNew) {
-    if (!isNew) return;
+    if (!isNew || _conversations == null) return;
 
-    for (int i = 0; i < _conversations.length; i++) {
-      if (_conversations[i].id != message.conversationId) {
+    for (int i = 0; i < _conversations!.length; i++) {
+      if (_conversations![i].id != message.conversationId) {
         continue;
       }
-      ConversationInfo conv = _conversations.removeAt(i);
+      ConversationInfo conv = _conversations!.removeAt(i);
       conv.lastMessage = message.text;
       conv.lastUpdate = DateTime.now().toUtc();
-      _conversations.insert(0, conv);
+      _conversations!.insert(0, conv);
       setState(() {});
       return;
     }
   }
 
-    Future<void> _loadConversations() async {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
+  Future<void> _loadConversations() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
     });
 
     try {
@@ -85,7 +85,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       setState(() {
         _user = user;
         _isLoading = false;
-      });      
+      });
     } catch (e) {
       if (!mounted) return;
 
@@ -252,7 +252,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           'Мои переписки',
           style: AppTextStyles.headline3,
         ),
-        if (!_isLoading && _conversations.isNotEmpty)
+        if (!_isLoading && _conversations != null && _conversations!.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppDimensions.paddingM,
@@ -272,7 +272,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
               ],
             ),
             child: Text(
-              '${_conversations.length}',
+              '${_conversations!.length}',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -284,7 +284,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   }
 
   Widget _buildContent() {
-    if (_isLoading) {
+    if (_conversations == null || _isLoading) {
       return const Padding(
         padding: EdgeInsets.only(top: 40),
         child: LoadingIndicator(message: 'Загрузка переписок...'),
@@ -298,7 +298,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       );
     }
 
-    if (_conversations.isEmpty) {
+    if (_conversations!.isEmpty) {
       return EmptyState(
         message: 'У вас пока нет переписок',
         icon: Icons.chat_bubble_outline,
@@ -310,9 +310,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: _conversations.length,
+      itemCount: _conversations!.length,
       itemBuilder: (context, index) {
-        final info = _conversations[index];
+        final info = _conversations![index];
         final id = info.id;
 
         return ConversationCard(

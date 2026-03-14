@@ -36,7 +36,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   User? _user;
-  final List<Message> _messages = [];
+  List<Message>? _messages;
   bool _isLoading = true;
   late ChatListener _listener;
 
@@ -78,24 +78,30 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _user = user;
       _isLoading = false;
+      // _messages остаётся null до прихода данных через listener
     });
     _scrollToBottom();
   }
 
   void _handleIncomingMessage(Message message, bool isNew) {
-    if (_messages.isNotEmpty && _messages.first.id == message.id) return;
+    // если список ещё пуст/не инициализирован — не пытаемся читать .first
+    if (_messages != null && _messages!.isNotEmpty && _messages!.first.id == message.id) return;
     try {
       if (!mounted) return;
 
       if (message.conversationId == widget.conversationId) {
         setState(() {
-          if (message.senderId != _user!.id) {
-            if (isNew) {_messages.add(message);}
-            else {_messages.insert(0, message);}
-          }
-          else {
+          _messages ??= []; // инициализируем при первом заходе
+
+          if (message.senderId != _user?.id) {
+            if (isNew) {
+              _messages!.add(message);
+            } else {
+              _messages!.insert(0, message);
+            }
+          } else {
             bool find = false;
-            for (var userMessage in _messages) {
+            for (var userMessage in _messages!) {
               if (userMessage.id == null && userMessage.text == message.text) {
                 userMessage.id = message.id;
                 userMessage.createdAt = message.createdAt;
@@ -104,8 +110,11 @@ class _ChatScreenState extends State<ChatScreen> {
               }
             }
             if (!find) {
-              if (isNew) {_messages.add(message);}
-              else {_messages.insert(0, message);}
+              if (isNew) {
+                _messages!.add(message);
+              } else {
+                _messages!.insert(0, message);
+              }
             }
           }
         });
@@ -130,8 +139,10 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     }
+
     setState(() {
-      _messages.add(Message(
+      _messages ??= []; // гарантируем, что список инициализирован
+      _messages!.add(Message(
         id: null,
         text: text,
         senderId: widget.userId,
@@ -161,10 +172,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _onScroll() {
+    // только если список инициализирован и в нём есть сообщения
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 50) {
-      if (_messages.isNotEmpty) {
-        final oldestMessage = _messages.first;
+      if (_messages != null && _messages!.isNotEmpty) {
+        final oldestMessage = _messages!.first;
         widget.manager.loadBefore(oldestMessage);
       }
     }
@@ -282,18 +294,19 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
+    // показываем индикатор, если ещё идёт загрузка или список сообщений ещё не инициализирован
+    if (_isLoading || _messages == null) {
       return const LoadingIndicator(message: 'Загрузка сообщений...');
     }
 
-    if (_messages.isEmpty) {
+    if (_messages!.isEmpty) {
       return EmptyState(
         message: 'Сообщений пока нет.\nНапишите что-нибудь!',
         icon: Icons.chat_bubble_outline,
       );
     }
 
-    final messagesList = _messages.toList();
+    final messagesList = _messages!.toList();
 
     return Container(
       color: Colors.transparent,
