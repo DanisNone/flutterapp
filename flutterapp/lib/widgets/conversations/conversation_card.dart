@@ -19,16 +19,7 @@ class ConversationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String name;
-    if (info.usersInfo == null || info.usersInfo!.length != 2) {
-      name = 'Беседа #${info.id}';
-    } else {
-      if (info.usersInfo![0].$1 == currentUserId) {
-        name = info.usersInfo![1].$2;
-      } else {
-        name = info.usersInfo![0].$2;
-      }
-    }
+    String name = info.getName(currentUserId);
 
     return GlassContainer(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),

@@ -125,7 +125,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     Navigator.pop(context);
 
     try {
-      final (conversationId, alreadyExists) = await getOrCreateDialog(
+      final (conversationId, alreadyExists, otherUsername) = await getOrCreateDialog(
         _user!,
         otherUserId,
         widget.token,
@@ -160,6 +160,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           builder: (_) => ChatScreen(
             conversationId: conversationId,
             userId: _user!.id,
+            chatName: otherUsername,
             token: widget.token,
             manager: manager,
           ),
@@ -312,6 +313,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 builder: (_) => ChatScreen(
                   conversationId: id,
                   userId: _user!.id,
+                  chatName: info.getName(_user!.id),
                   token: widget.token,
                   manager: manager,
                 ),

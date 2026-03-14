@@ -19,12 +19,14 @@ import 'package:flutterapp/theme/app_theme.dart';
 class ChatScreen extends StatefulWidget {
   final int conversationId;
   final int userId;
+  final String chatName;
   final JWTToken token;
   final ChatManager manager;
 
   const ChatScreen({
     super.key,
     required this.conversationId,
+    required this.chatName,
     required this.userId,
     required this.token,
     required this.manager,
@@ -200,7 +202,7 @@ class _ChatScreenState extends State<ChatScreen> {
             borderRadius: 12,
             opacity: 0.04,
             child: Text(
-              'Беседа #${widget.conversationId}',
+              widget.chatName,
               style: AppTextStyles.title,
             ),
           ),

@@ -26,4 +26,14 @@ class ConversationInfo {
       lastMessage: json['last_message'] as String?,
     );
   }
+
+  String getName(int currentUserId) {
+    if (usersInfo == null || usersInfo!.length != 2) {
+        return 'Беседа #$id';
+    }
+    if (usersInfo![0].$1 == currentUserId) {
+      return usersInfo![1].$2;
+    }
+    return usersInfo![0].$2;
+  }
 }
