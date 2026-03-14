@@ -11,7 +11,6 @@ class User {
   final String? avatarUrl;
   final UserRole role;
   final DateTime createdAt;
-  final bool isActive;
 
   User({
     required this.id,
@@ -22,7 +21,6 @@ class User {
     this.avatarUrl,
     required this.role,
     required this.createdAt,
-    required this.isActive,
   });
 
   // Factory constructor для создания из JSON
@@ -36,7 +34,6 @@ class User {
       avatarUrl: json['avatar_url'] as String?,
       role: _parseUserRole(json['role'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
-      isActive: json['is_active'] as bool,
     );
   }
 
@@ -55,7 +52,6 @@ class User {
       'avatar_url': avatarUrl,
       'role': role.name,
       'created_at': createdAt.toIso8601String(),
-      'is_active': isActive,
     };
   }
 
@@ -91,7 +87,6 @@ class User {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
-      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -111,8 +106,7 @@ class User {
         other.bio == bio &&
         other.avatarUrl == avatarUrl &&
         other.role == role &&
-        other.createdAt == createdAt &&
-        other.isActive == isActive;
+        other.createdAt == createdAt;
   }
 
   @override
@@ -125,8 +119,7 @@ class User {
       bio,
       avatarUrl,
       role,
-      createdAt,
-      isActive,
+      createdAt
     );
   }
 }
