@@ -16,14 +16,15 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: stable
+          flutter-version: '3.41.x'
+          channel: 'stable'
 
       - name: Install dependencies
-        working-directory: ./flutterapp  # Указываем рабочую директорию
+        working-directory: ./flutterapp
         run: flutter pub get
 
       - name: Build APK
-        working-directory: ./flutterapp  # Указываем рабочую директорию
+        working-directory: ./flutterapp
         run: flutter build apk --release
 
       - name: Create GitHub Release and Upload APK
@@ -31,7 +32,7 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          files: flutterapp/build/app/outputs/flutter-apk/app-release.apk  # Обновлён путь
+          files: flutterapp/build/app/outputs/flutter-apk/app-release.apk
           draft: false
           prerelease: false
         env:
