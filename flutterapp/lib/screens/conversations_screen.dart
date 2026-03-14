@@ -4,6 +4,7 @@ import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
+import 'package:flutterapp/screens/profile_screen.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/service/secure_storage.dart';
@@ -185,59 +186,74 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   Widget _buildUserInfo() {
     if (_user == null) return const SizedBox();
 
-    return GlassContainer(
-      padding: const EdgeInsets.all(AppDimensions.paddingM),
-      borderRadius: 16,
-      opacity: 0.06,
-      border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryLight],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.4),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProfileScreen(token: widget.token),
+          ),
+        );
+      },
+      child: GlassContainer(
+        padding: const EdgeInsets.all(AppDimensions.paddingM),
+        borderRadius: 16,
+        opacity: 0.06,
+        border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryLight],
                 ),
-              ],
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.4),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.person,
+                color: Colors.white,
+                size: AppDimensions.iconM,
+              ),
             ),
-            child: const Icon(
-              Icons.person,
-              color: Colors.white,
+            const SizedBox(width: AppDimensions.paddingM),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Пользователь',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  Text(
+                    _user!.username,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Стрелка для индикации перехода
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.textMuted,
               size: AppDimensions.iconM,
             ),
-          ),
-          const SizedBox(width: AppDimensions.paddingM),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Пользователь',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                Text(
-                  _user!.username,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -340,21 +356,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
               icon: const Icon(Icons.refresh),
               onPressed: _refresh,
               tooltip: 'Обновить',
-            ),
-            IconButton(
-              icon: const Icon(Icons.exit_to_app),
-              onPressed: () {
-                SecureStorageService().deleteJWTToken();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const GradientBackground(child: LoginScreen()),
-                  ),
-                  (route) => false,
-                );
-              },
-              tooltip: 'Выход',
             ),
           ],
         ),
