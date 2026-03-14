@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:flutterapp/constants/app_text_styles.dart';
 
 class ChatInput extends StatefulWidget {
   final TextEditingController controller;
@@ -46,12 +47,10 @@ class _ChatInputState extends State<ChatInput> {
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     final platform = defaultTargetPlatform;
 
-    // На мобильных не перехватываем Enter → обычный перенос строки
     if (platform == TargetPlatform.android || platform == TargetPlatform.iOS) {
       return KeyEventResult.ignored;
     }
 
-    // На desktop/web Enter отправляет сообщение
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
       final shiftPressed = HardwareKeyboard.instance.logicalKeysPressed.any(
         (key) =>
@@ -77,14 +76,13 @@ class _ChatInputState extends State<ChatInput> {
           vertical: AppDimensions.paddingS,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, -2),
+          color: AppColors.surfaceDark,
+          border: Border(
+            top: BorderSide(
+              color: AppColors.border,
+              width: 1,
             ),
-          ],
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -97,35 +95,39 @@ class _ChatInputState extends State<ChatInput> {
                   return TextField(
                     controller: widget.controller,
                     focusNode: _focusNode,
+                    style: AppTextStyles.bodyLarge,
                     decoration: InputDecoration(
                       hintText: 'Введите сообщение...',
+                      hintStyle: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textHint,
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                        borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                         borderSide: BorderSide(
-                          color: isOverLimit ? Colors.red.shade300 : Colors.grey.shade300,
+                          color: isOverLimit ? AppColors.error.withOpacity(0.5) : AppColors.border,
                           width: 1,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                         borderSide: BorderSide(
-                          color: isOverLimit ? Colors.red.shade400 : AppColors.primary,
+                          color: isOverLimit ? AppColors.error : AppColors.primary,
                           width: 2,
                         ),
                       ),
                       filled: true,
-                      fillColor: isOverLimit ? Colors.red.shade50 : Colors.grey.shade50,
+                      fillColor: isOverLimit ? AppColors.error.withOpacity(0.1) : AppColors.surface,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppDimensions.paddingL,
                         vertical: AppDimensions.paddingM,
                       ),
-                      // Use maxLength but allow exceeding via MaxLengthEnforcement.none
                       counterStyle: isOverLimit
-                          ? const TextStyle(color: Colors.red)
-                          : null,
+                          ? const TextStyle(color: AppColors.error)
+                          : AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
                     ),
                     minLines: 1,
                     maxLines: 4,
@@ -140,7 +142,7 @@ class _ChatInputState extends State<ChatInput> {
                         child: Text(
                           '$currentLength/$_maxLength',
                           style: TextStyle(
-                            color: isOverLimit ? Colors.red : Colors.grey,
+                            color: isOverLimit ? AppColors.error : AppColors.textMuted,
                             fontSize: 12,
                           ),
                         ),
@@ -153,8 +155,22 @@ class _ChatInputState extends State<ChatInput> {
             const SizedBox(width: AppDimensions.paddingS),
             Container(
               decoration: BoxDecoration(
-                color: _isExceedingLimit ? Colors.grey : AppColors.primary,
+                gradient: _isExceedingLimit 
+                    ? null 
+                    : const LinearGradient(
+                        colors: [AppColors.primary, AppColors.primaryLight],
+                      ),
+                color: _isExceedingLimit ? AppColors.textMuted : null,
                 shape: BoxShape.circle,
+                boxShadow: _isExceedingLimit 
+                    ? null 
+                    : [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.4),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
               ),
               child: IconButton(
                 onPressed: _isExceedingLimit ? null : _handleSubmitted,

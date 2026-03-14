@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:flutterapp/constants/app_text_styles.dart';
 
 class AuthField extends StatelessWidget {
   final TextEditingController controller;
@@ -8,7 +10,7 @@ class AuthField extends StatelessWidget {
   final TextInputType keyboardType;
   final bool enabled;
   final String? Function(String?)? validator;
-  
+
   const AuthField({
     super.key,
     required this.controller,
@@ -18,7 +20,7 @@ class AuthField extends StatelessWidget {
     this.enabled = true,
     this.validator,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return TextField(
@@ -26,13 +28,33 @@ class AuthField extends StatelessWidget {
       obscureText: obscure,
       keyboardType: keyboardType,
       enabled: enabled,
+      style: AppTextStyles.bodyLarge,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.textSecondary,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          borderSide: BorderSide(
+            color: AppColors.border,
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          borderSide: BorderSide(
+            color: AppColors.primary,
+            width: 2,
+          ),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.all(AppDimensions.paddingL),
       ),
     );
   }

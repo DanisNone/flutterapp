@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/utils/responsive.dart';
+import 'package:flutterapp/constants/app_colors.dart';
 
 class ResponsiveContainer extends StatelessWidget {
   final Widget child;
@@ -7,7 +8,7 @@ class ResponsiveContainer extends StatelessWidget {
   final EdgeInsets? padding;
   final Color? color;
   final Decoration? decoration;
-  
+
   const ResponsiveContainer({
     super.key,
     required this.child,
@@ -16,7 +17,7 @@ class ResponsiveContainer extends StatelessWidget {
     this.color,
     this.decoration,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Center(

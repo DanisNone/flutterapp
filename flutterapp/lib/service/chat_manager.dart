@@ -64,7 +64,7 @@ class ChatManager {
         onDone: _onDone,
         cancelOnError: true,
       );
-  
+
       _setConnection(_isConnected);
       _isReconnecting = false;
     } catch (e) {
@@ -178,7 +178,7 @@ class ChatManager {
       } else {
         throw Exception("unknown websocket answer type: ${decoded["type"]}");
       }
-      
+
     }
     catch (e) {
       _onError(e);

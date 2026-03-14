@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_colors.dart';
+import 'package:flutterapp/constants/app_text_styles.dart';
 
 class ConnectionStatus extends StatelessWidget {
   final bool isConnected;
-  
+
   const ConnectionStatus({
     super.key,
     required this.isConnected,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -23,8 +24,8 @@ class ConnectionStatus extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: (isConnected ? AppColors.online : AppColors.offline).withOpacity(0.5),
-                blurRadius: 4,
-                spreadRadius: 1,
+                blurRadius: 8,
+                spreadRadius: 2,
               ),
             ],
           ),
@@ -32,8 +33,8 @@ class ConnectionStatus extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           isConnected ? 'Подключено' : 'Отключено',
-          style: TextStyle(
-            color: isConnected ? AppColors.online : AppColors.offline,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: isConnected ? AppColors.online : AppColors.textMuted,
             fontWeight: FontWeight.w500,
           ),
         ),

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
+import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/conversations.dart';
+import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
@@ -15,6 +17,8 @@ import 'package:flutterapp/widgets/conversations/conversation_card.dart';
 import 'package:flutterapp/widgets/conversations/create_conversation_sheet.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:flutterapp/constants/app_text_styles.dart';
+import 'package:flutterapp/theme/app_theme.dart';
 
 class ConversationsScreen extends StatefulWidget {
   final JWTToken token;
@@ -106,11 +110,17 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusL)),
-      ),
-      builder: (context) => CreateConversationSheet(
-        onCreate: _createConversation,
+      backgroundColor: Colors.transparent,
+      builder: (context) => GlassContainer(
+        borderRadius: 24,
+        opacity: 0.08,
+        border: Border.all(
+          color: AppColors.borderGlow,
+          width: 1.5,
+        ),
+        child: CreateConversationSheet(
+          onCreate: _createConversation,
+        ),
       ),
     );
   }
@@ -118,7 +128,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   Future<void> _createConversation(int otherUserId) async {
     if (_user == null) return;
 
-    Navigator.pop(context); // Закрываем bottom sheet
+    Navigator.pop(context);
 
     try {
       final (conversationId, alreadyExists) = await getOrCreateDialog(
@@ -136,16 +146,18 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$message (ID: $conversationId)'),
-          backgroundColor: alreadyExists ? Colors.orange : Colors.green,
+          backgroundColor: alreadyExists ? AppColors.warning : AppColors.success,
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
 
       await _refresh();
 
       if (!mounted) return;
-      
-      // Плавный переход в чат
+
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -163,8 +175,11 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Ошибка: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -173,20 +188,30 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   Widget _buildUserInfo() {
     if (_user == null) return const SizedBox();
 
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
-      decoration: BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+      borderRadius: 16,
+      opacity: 0.06,
+      border: Border.all(
+        color: AppColors.primary.withOpacity(0.3),
+        width: 1,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryLight],
+              ),
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.4),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: const Icon(
               Icons.person,
@@ -201,15 +226,13 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
               children: [
                 Text(
                   'Пользователь',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textMuted,
                   ),
                 ),
                 Text(
                   _user!.username,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -227,9 +250,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       children: [
         Text(
           'Мои переписки',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.headline3,
         ),
         if (!_isLoading && _conversations.isNotEmpty)
           Container(
@@ -238,8 +259,17 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
               vertical: AppDimensions.paddingXS,
             ),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryLight],
+              ),
               borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: Text(
               '${_conversations.length}',
@@ -308,41 +338,69 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Мои переписки'),
-        elevation: 0,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
-            tooltip: 'Обновить',
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openCreateConversationSheet,
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        color: AppColors.primary,
-        child: ResponsiveContainer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppDimensions.paddingM),
-              _buildUserInfo(),
-              const SizedBox(height: AppDimensions.paddingXL),
-              _buildHeader(),
-              const SizedBox(height: AppDimensions.paddingL),
-              Expanded(
-                child: _buildContent(),
+    return GradientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('Мои переписки'),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppColors.textPrimary,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _refresh,
+              tooltip: 'Обновить',
+            ),
+            IconButton(
+              icon: const Icon(Icons.exit_to_app),
+              onPressed: () {
+                SecureStorageService().deleteJWTToken();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GradientBackground(child: LoginScreen())),
+                  (route) => false,
+                );
+              },
+              tooltip: 'Выход',
+            ),
+          ],
+        ),
+        floatingActionButton: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusCircle),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.5),
+                blurRadius: 20,
+                spreadRadius: 4,
               ),
             ],
+          ),
+          child: FloatingActionButton(
+            onPressed: _openCreateConversationSheet,
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+        ),
+        body: RefreshIndicator(
+          onRefresh: _refresh,
+          color: AppColors.primary,
+          backgroundColor: AppColors.surfaceDark,
+          child: ResponsiveContainer(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: AppDimensions.paddingM),
+                _buildUserInfo(),
+                const SizedBox(height: AppDimensions.paddingXL),
+                _buildHeader(),
+                const SizedBox(height: AppDimensions.paddingL),
+                Expanded(
+                  child: _buildContent(),
+                ),
+              ],
+            ),
           ),
         ),
       ),

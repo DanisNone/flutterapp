@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/constants/app_colors.dart';
-import '../common/loading_indicator.dart';
+import 'package:flutterapp/widgets/common/loading_indicator.dart';
 
 class AuthForm extends StatelessWidget {
   final String title;
@@ -10,7 +10,7 @@ class AuthForm extends StatelessWidget {
   final VoidCallback onSubmit;
   final bool isLoading;
   final Widget? footer;
-  
+
   const AuthForm({
     super.key,
     required this.title,
@@ -20,7 +20,7 @@ class AuthForm extends StatelessWidget {
     this.isLoading = false,
     this.footer,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Center(

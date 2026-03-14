@@ -9,7 +9,7 @@ class MessageBubble extends StatelessWidget {
   final String text;
   final bool isMine;
   final DateTime timestamp;
-  
+
   const MessageBubble({
     super.key,
     required this.isSended,
@@ -17,7 +17,7 @@ class MessageBubble extends StatelessWidget {
     required this.isMine,
     required this.timestamp,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -31,8 +31,31 @@ class MessageBubble extends StatelessWidget {
               : MediaQuery.of(context).size.width * 0.7,
         ),
         decoration: BoxDecoration(
-          color: isMine ? AppColors.myMessage : AppColors.theirMessage,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+          gradient: isMine 
+              ? const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryLight],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isMine ? null : AppColors.theirMessage,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          boxShadow: isMine 
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +96,7 @@ class MessageBubble extends StatelessWidget {
       ),
     );
   }
-  
+
   String _formatTime(DateTime time) {
     time = time.toLocal();
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';

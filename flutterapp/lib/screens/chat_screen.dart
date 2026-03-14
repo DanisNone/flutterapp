@@ -13,6 +13,8 @@ import 'package:flutterapp/widgets/chat/message_bubble.dart';
 import 'package:flutterapp/widgets/chat/chat_input.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:flutterapp/constants/app_text_styles.dart';
+import 'package:flutterapp/theme/app_theme.dart';
 
 class ChatScreen extends StatefulWidget {
   final int conversationId;
@@ -118,9 +120,13 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
     if (!widget.manager.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Нет соединения с сервером'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: const Text('Нет соединения с сервером'),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -174,22 +180,35 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _buildBody(),
+    return GradientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppColors.textPrimary,
+          title: GlassContainer(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            borderRadius: 12,
+            opacity: 0.04,
+            child: Text(
+              'Беседа #${widget.conversationId}',
+              style: AppTextStyles.title,
+            ),
           ),
-          ChatInput(
-            controller: _controller,
-            onSend: _sendMessage
-          ),
-        ],
+          centerTitle: true,
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: _buildBody(),
+            ),
+            ChatInput(
+              controller: _controller,
+              onSend: _sendMessage
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -197,29 +216,38 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showMessageOptions(BuildContext context, Message message) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.copy),
-                title: const Text('Копировать'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _copyMessage(message);
-                },
-              ),
-              if (message.senderId == _user?.id) // только свои сообщения можно удалять
+        return GlassContainer(
+          borderRadius: 24,
+          opacity: 0.08,
+          border: Border.all(
+            color: AppColors.borderGlow,
+            width: 1.5,
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 ListTile(
-                  leading: const Icon(Icons.delete),
-                  title: const Text('Удалить'),
+                  leading: const Icon(Icons.copy, color: AppColors.textSecondary),
+                  title: Text('Копировать', style: AppTextStyles.bodyLarge),
                   onTap: () {
                     Navigator.pop(context);
-                    _deleteMessage(message);
+                    _copyMessage(message);
                   },
                 ),
-            ],
+                if (message.senderId == _user?.id)
+                  ListTile(
+                    leading: const Icon(Icons.delete, color: AppColors.error),
+                    title: Text('Удалить', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.error)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _deleteMessage(message);
+                    },
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -228,11 +256,28 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _copyMessage(Message message) {
     Clipboard.setData(ClipboardData(text: message.text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Сообщение скопировано'),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteMessage(Message message) async {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Это не реализовано')),
+      SnackBar(
+        content: const Text('Это не реализовано'),
+        backgroundColor: AppColors.warning,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
     );
   }
 
@@ -251,20 +296,18 @@ class _ChatScreenState extends State<ChatScreen> {
     final messagesList = _messages.toList();
 
     return Container(
-      color: Colors.grey.shade50,
+      color: Colors.transparent,
       child: ListView.builder(
         controller: _scrollController,
-        reverse: true, // инвертируем прокрутку
+        reverse: true,
         padding: const EdgeInsets.all(AppDimensions.paddingL),
         itemCount: messagesList.length,
         itemBuilder: (context, index) {
-          // Теперь index=0 — самое новое сообщение
           final message = messagesList[messagesList.length - 1 - index];
           final isMine = _user != null && message.senderId == _user!.id;
 
-          // Проверяем, нужно ли вставить разделитель с датой
           bool showDateHeader = false;
-          if (index == messagesList.length - 1) { // первый сверху (самое старое)
+          if (index == messagesList.length - 1) {
             showDateHeader = true;
           } else {
             final previousMessage = messagesList[messagesList.length - index - 2];
@@ -279,12 +322,16 @@ class _ChatScreenState extends State<ChatScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
-                  child: Text(
-                    _formatDate(message.createdAt),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
+                  child: GlassContainer(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    borderRadius: 20,
+                    opacity: 0.04,
+                    child: Text(
+                      _formatDate(message.createdAt),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

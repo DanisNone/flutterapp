@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/model/conversation_info.dart';
+import 'package:flutterapp/theme/app_theme.dart';
 
 class ConversationCard extends StatelessWidget {
   final ConversationInfo info;
   final int currentUserId;
   final VoidCallback onTap;
-  
+
   const ConversationCard({
     super.key,
     required this.info,
     required this.currentUserId,
     required this.onTap,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     String name;
@@ -27,31 +29,50 @@ class ConversationCard extends StatelessWidget {
         name = info.usersInfo![0].$2;
       }
     }
-    return Card(
+
+    return GlassContainer(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+      borderRadius: AppDimensions.radiusL,
+      opacity: 0.04,
+      border: Border.all(
+        color: AppColors.border,
+        width: 1,
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(AppDimensions.paddingM),
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primaryLight,
-          radius: 24,
-          child: Text(
-            info.id.toString(),
-            style: TextStyle(
-              color: AppColors.primaryDark,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.primary, AppColors.primaryLight],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '#',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
           ),
         ),
         title: Text(
           name,
-          style: const TextStyle(
+          style: AppTextStyles.title.copyWith(
             fontWeight: FontWeight.w600,
-            fontSize: 16,
           ),
         ),
         subtitle: info.lastMessage != null
@@ -63,30 +84,39 @@ class ConversationCard extends StatelessWidget {
                     info.lastMessage!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
-                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _formatTime(info.lastUpdate),
-                    style: TextStyle(
-                      color: AppColors.textHint,
-                      fontSize: 12,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ],
               )
             : Text(
                 'Нет сообщений',
-                style: TextStyle(color: AppColors.textHint),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textHint,
+                ),
               ),
         trailing: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withOpacity(0.2),
+                AppColors.glow.withOpacity(0.1),
+              ],
+            ),
             shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.3),
+              width: 1,
+            ),
           ),
           child: const Icon(
             Icons.chevron_right,
@@ -97,11 +127,11 @@ class ConversationCard extends StatelessWidget {
       ),
     );
   }
-  
+
   String _formatTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} дн. назад';
     } else if (difference.inHours > 0) {
