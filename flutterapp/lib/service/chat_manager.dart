@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
-import 'package:flutterapp/model/ConversationInfo.dart';
+import 'package:flutterapp/model/conversation_info.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:flutterapp/model/jwttoken.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/model/ConversationInfo.dart';
+import 'package:flutterapp/model/conversation_info.dart';
 
 class ConversationCard extends StatelessWidget {
   final ConversationInfo info;

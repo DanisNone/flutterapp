@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutterapp/model/ConversationInfo.dart';
+import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
