@@ -246,6 +246,13 @@ class ChatManager {
     _sendMessage();
   }
 
+  Future<void> deleteMessage(int messageId) async {
+    if (!_isConnected || _channel == null) {
+      throw Exception('Нет соединения с сервером');
+    }
+    throw Exception("not implemented");
+  }
+
   void _closeChannel() {
     try {
       _channelSubscription?.cancel();
