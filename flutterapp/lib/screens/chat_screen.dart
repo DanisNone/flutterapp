@@ -81,6 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _handleIncomingMessage(Message message, bool isNew) {
+    if (_messages.isNotEmpty && _messages.first.id == message.id) return;
     try {
       if (!mounted) return;
 
