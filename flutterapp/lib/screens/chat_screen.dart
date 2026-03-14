@@ -128,6 +128,7 @@ class _ChatScreenState extends State<ChatScreen> {
         createdAt: DateTime.now().toUtc(),
         conversationId: widget.conversationId
       ));
+      _scrollToBottom();
     });
 
     widget.manager.sendMessage(
@@ -141,11 +142,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        final max = _scrollController.position.maxScrollExtent;
-        _scrollController.animateTo(
-          max,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+        final min = _scrollController.position.minScrollExtent;
+        _scrollController.jumpTo(
+          min
         );
       }
     });
