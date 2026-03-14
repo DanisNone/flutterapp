@@ -40,7 +40,7 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
                 color: AppColors.glow,
                 shadows: [
                   Shadow(
-                    color: AppColors.primary.withOpacity(0.5),
+                    color: AppColors.primary.withValues(alpha: 0.5),
                     blurRadius: 10,
                   ),
                 ],

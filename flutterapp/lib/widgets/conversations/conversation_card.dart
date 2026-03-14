@@ -40,7 +40,7 @@ class ConversationCard extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
+                color: AppColors.primary.withValues(alpha: 0.3),
                 blurRadius: 12,
                 spreadRadius: 2,
               ),
@@ -94,13 +94,13 @@ class ConversationCard extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.primary.withOpacity(0.2),
-                AppColors.glow.withOpacity(0.1),
+                AppColors.primary.withValues(alpha: 0.2),
+                AppColors.glow.withValues(alpha: 0.1),
               ],
             ),
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.primary.withOpacity(0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               width: 1,
             ),
           ),

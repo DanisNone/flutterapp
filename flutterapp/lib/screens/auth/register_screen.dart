@@ -112,7 +112,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.secondary.withOpacity(0.5),
+                            color: AppColors.secondary.withValues(alpha: 0.5),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
@@ -131,7 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: AppColors.secondaryLight,
                         shadows: [
                           Shadow(
-                            color: AppColors.secondary.withOpacity(0.8),
+                            color: AppColors.secondary.withValues(alpha: 0.8),
                             blurRadius: 20,
                           ),
                         ],
@@ -204,7 +204,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           side: BorderSide(
-                            color: AppColors.secondary.withOpacity(0.5),
+                            color: AppColors.secondary.withValues(alpha: 0.5),
                           ),
                         ),
                         child: Text(

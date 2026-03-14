@@ -103,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.5),
+            color: AppColors.primary.withValues(alpha: 0.5),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -146,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
         boxShadow: [
           BoxShadow(
-            color: (isAdmin ? AppColors.warning : AppColors.primary).withOpacity(0.4),
+            color: (isAdmin ? AppColors.warning : AppColors.primary).withValues(alpha: 0.4),
             blurRadius: 12,
             spreadRadius: 2,
           ),
@@ -187,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       borderRadius: 16,
       opacity: 0.06,
       border: Border.all(
-        color: AppColors.borderGlow.withOpacity(0.5),
+        color: AppColors.borderGlow.withValues(alpha: 0.5),
         width: 1,
       ),
       child: Column(
@@ -228,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.surfaceDark.withOpacity(0.5),
+                fillColor: AppColors.surfaceDark.withValues(alpha: 0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -347,7 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 15,
             spreadRadius: 2,
           ),

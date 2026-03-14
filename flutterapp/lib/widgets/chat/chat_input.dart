@@ -104,7 +104,7 @@ class _ChatInputState extends State<ChatInput> {
                         ),
                         borderSide: BorderSide(
                           color: isOverLimit
-                              ? AppColors.error.withOpacity(0.5)
+                              ? AppColors.error.withValues(alpha: 0.5)
                               : AppColors.border,
                           width: 1,
                         ),
@@ -122,7 +122,7 @@ class _ChatInputState extends State<ChatInput> {
                       ),
                       filled: true,
                       fillColor: isOverLimit
-                          ? AppColors.error.withOpacity(0.1)
+                          ? AppColors.error.withValues(alpha: 0.1)
                           : AppColors.surface,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppDimensions.paddingL,
@@ -176,7 +176,7 @@ class _ChatInputState extends State<ChatInput> {
                     ? null
                     : [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.4),
+                          color: AppColors.primary.withValues(alpha: 0.4),
                           blurRadius: 12,
                           spreadRadius: 2,
                         ),

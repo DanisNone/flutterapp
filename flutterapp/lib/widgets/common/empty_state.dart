@@ -31,15 +31,15 @@ class EmptyState extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.primary.withOpacity(0.2),
-                    AppColors.glow.withOpacity(0.1),
+                    AppColors.primary.withValues(alpha: 0.2),
+                    AppColors.glow.withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),

@@ -192,7 +192,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         padding: const EdgeInsets.all(AppDimensions.paddingM),
         borderRadius: 16,
         opacity: 0.06,
-        border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
         child: Row(
           children: [
             Container(
@@ -204,7 +204,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
+                    color: AppColors.primary.withValues(alpha: 0.4),
                     blurRadius: 12,
                     spreadRadius: 2,
                   ),
@@ -265,7 +265,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
               borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -357,7 +357,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             borderRadius: BorderRadius.circular(AppDimensions.radiusCircle),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.5),
+                color: AppColors.primary.withValues(alpha: 0.5),
                 blurRadius: 20,
                 spreadRadius: 4,
               ),

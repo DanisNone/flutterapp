@@ -42,11 +42,11 @@ class AppTheme {
                 borderRadius: BorderRadius.circular(AppDimensions.radiusL),
               ),
               elevation: 0,
-              shadowColor: AppColors.primary.withOpacity(0.5),
+              shadowColor: AppColors.primary.withValues(alpha: 0.5),
               textStyle: AppTextStyles.button,
             ).copyWith(
               overlayColor: WidgetStateProperty.all(
-                AppColors.glow.withOpacity(0.2),
+                AppColors.glow.withValues(alpha: 0.2),
               ),
             ),
       ),
@@ -61,7 +61,7 @@ class AppTheme {
                 AppDimensions.buttonHeight,
               ),
               side: BorderSide(
-                color: AppColors.primary.withOpacity(0.5),
+                color: AppColors.primary.withValues(alpha: 0.5),
                 width: 1.5,
               ),
               shape: RoundedRectangleBorder(
@@ -70,7 +70,7 @@ class AppTheme {
               textStyle: AppTextStyles.button,
             ).copyWith(
               overlayColor: WidgetStateProperty.all(
-                AppColors.primary.withOpacity(0.1),
+                AppColors.primary.withValues(alpha: 0.1),
               ),
             ),
       ),
@@ -205,8 +205,8 @@ class GlassContainer extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  (tintColor ?? Colors.white).withOpacity(opacity),
-                  (tintColor ?? Colors.white).withOpacity(opacity * 0.5),
+                  (tintColor ?? Colors.white).withValues(alpha: opacity),
+                  (tintColor ?? Colors.white).withValues(alpha: opacity * 0.5),
                 ],
               ),
               borderRadius: BorderRadius.circular(borderRadius),
@@ -246,13 +246,13 @@ class NeonButton extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.4),
+            color: AppColors.primary.withValues(alpha: 0.4),
             blurRadius: 20,
             spreadRadius: 2,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: AppColors.glow.withOpacity(0.2),
+            color: AppColors.glow.withValues(alpha: 0.2),
             blurRadius: 40,
             spreadRadius: 4,
             offset: const Offset(0, 4),

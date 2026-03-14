@@ -43,7 +43,7 @@ class MessageBubble extends StatelessWidget {
           boxShadow: isMine
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     spreadRadius: 2,
                     offset: const Offset(0, 4),
@@ -51,7 +51,7 @@ class MessageBubble extends StatelessWidget {
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -75,8 +75,8 @@ class MessageBubble extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     color: isMine
-                        ? Colors.white.withOpacity(0.7)
-                        : AppColors.textSecondary.withOpacity(0.7),
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : AppColors.textSecondary.withValues(alpha: 0.7),
                   ),
                 ),
                 const SizedBox(width: 4),

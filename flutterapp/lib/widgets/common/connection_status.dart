@@ -21,7 +21,7 @@ class ConnectionStatus extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: (isConnected ? AppColors.online : AppColors.offline)
-                    .withOpacity(0.5),
+                    .withValues(alpha: 0.5),
                 blurRadius: 8,
                 spreadRadius: 2,
               ),
