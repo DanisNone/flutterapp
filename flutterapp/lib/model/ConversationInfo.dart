@@ -8,8 +8,8 @@ class ConversationInfo {
 
   factory ConversationInfo.fromJson(Map<String, dynamic> json) {
     List<(int, String)>? usersInfo;
-    if (json['users_info'] != null) {
-      usersInfo = (json['users_info'] as List)
+    if (json['users'] != null) {
+      usersInfo = (json['users'] as List)
           .map<(int, String)>((e) {
             final list = e as List;
             return (list[0] as int, list[1] as String);

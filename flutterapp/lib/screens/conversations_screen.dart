@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/model/ConversationInfo.dart';
+import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
@@ -40,7 +40,13 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     super.initState();
     manager.setToken(widget.token);
     manager.addListener(ChatListener(
-      newMessage: _lastMessageUpdate
+      newMessage: _lastMessageUpdate,
+      conversations: (c) {
+        setState(() {
+          _conversations = c;
+        });
+        print(c);
+      }
     ));
     _loadConversations();
   }
@@ -60,21 +66,21 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       return;
     }
   }
+
     Future<void> _loadConversations() async {
       setState(() {
         _isLoading = true;
-      _errorMessage = null;
+        _errorMessage = null;
     });
 
     try {
       final user = await getUser(widget.token);
-      final convs = await getAllUserConversations(user, widget.token);
+      manager.loadConversations();
 
       if (!mounted) return;
 
       setState(() {
         _user = user;
-        _conversations = convs;
         _isLoading = false;
       });      
     } catch (e) {

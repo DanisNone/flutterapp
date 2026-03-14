@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:flutterapp/model/ConversationInfo.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:flutterapp/model/jwttoken.dart';
@@ -11,12 +12,14 @@ import 'package:flutterapp/routes/all_routes.dart';
 class ChatListener {
   final void Function(bool)? connection;
   final void Function(Message, bool)? newMessage;
+  final void Function(List<ConversationInfo>)? conversations;
   final void Function(dynamic)? error;
 
   ChatListener({
     this.connection,
     this.newMessage,
     this.error,
+    this.conversations
   });
 }
 
@@ -73,13 +76,20 @@ class ChatManager {
   void _setConnection(bool value) {
     if (value) _sendMessage();
     _isConnected = value;
-    for (var listener in List<ChatListener>.from(_listeners)) {
+    for (var listener in _listeners) {
       try {
         listener.connection?.call(value);
       } catch (_) {
         // Игнорируем исключения слушателей
       }
     }
+  }
+
+  void loadConversations() {
+    _connect();
+    _channel!.sink.add(jsonEncode({
+      "type": "get_conversations",
+    }));
   }
 
   void loadLast(
@@ -122,7 +132,7 @@ class ChatManager {
 
     final message = Message.fromJson(messageMap);
 
-    for (var listener in List<ChatListener>.from(_listeners)) {
+    for (var listener in _listeners) {
       try {
         listener.newMessage?.call(message, true);
       } catch (_) {}
@@ -141,7 +151,17 @@ class ChatManager {
       } else {
         return;
       }
-
+      if (decoded["type"] == "conversations") {
+        List<ConversationInfo> convs = (
+          decoded["data"] as List
+        ).map((o) => ConversationInfo.fromJson(o as Map<String, dynamic>)).toList();
+        for (var listener in _listeners) {
+          try {listener.conversations?.call(convs);}
+          catch (e) {
+            // игнорим ошибки в callback
+          }
+        }
+      } else
       if (decoded["type"] == "new_message") {
         final data = Map<String, dynamic>.from(decoded["data"] as Map);
         _addMessage(data);
@@ -149,7 +169,7 @@ class ChatManager {
         final data = List<Map<String, dynamic>>.from(decoded["data"] as List);
         final messages = data.map(Message.fromJson);
         for (var message in  messages) {
-          for (var listener in List<ChatListener>.from(_listeners)) {
+          for (var listener in _listeners) {
             try {
               listener.newMessage?.call(message, false);
             } catch (_) {}
@@ -168,7 +188,7 @@ class ChatManager {
   void _onError(dynamic error) {
     _setConnection(false);
 
-    for (var listener in List<ChatListener>.from(_listeners)) {
+    for (var listener in _listeners) {
       try {
         listener.error?.call(error);
       } catch (_) {}
