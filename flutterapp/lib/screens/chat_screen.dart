@@ -34,7 +34,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   User? _user;
-  final SplayTreeSet<Message> _messages = SplayTreeSet((m1,m2) => m1.createdAt.compareTo(m2.createdAt));
+  final List<Message> _messages = [];
   bool _isLoading = true;
   late ChatListener _listener;
 
@@ -87,7 +87,8 @@ class _ChatScreenState extends State<ChatScreen> {
       if (message.conversationId == widget.conversationId) {
         setState(() {
           if (message.senderId != _user!.id) {
-            _messages.add(message);
+            if (isNew) {_messages.add(message);}
+            else {_messages.insert(0, message);}
           }
           else {
             bool find = false;
@@ -100,7 +101,8 @@ class _ChatScreenState extends State<ChatScreen> {
               }
             }
             if (!find) {
-              _messages.add(message);
+              if (isNew) {_messages.add(message);}
+              else {_messages.insert(0, message);}
             }
           }
         });
