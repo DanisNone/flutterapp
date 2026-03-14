@@ -9,11 +9,7 @@ class ChatInput extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
 
-  const ChatInput({
-    super.key,
-    required this.controller,
-    required this.onSend,
-  });
+  const ChatInput({super.key, required this.controller, required this.onSend});
 
   @override
   State<ChatInput> createState() => _ChatInputState();
@@ -77,12 +73,7 @@ class _ChatInputState extends State<ChatInput> {
         ),
         decoration: BoxDecoration(
           color: AppColors.surfaceDark,
-          border: Border(
-            top: BorderSide(
-              color: AppColors.border,
-              width: 1,
-            ),
-          ),
+          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -102,52 +93,71 @@ class _ChatInputState extends State<ChatInput> {
                         color: AppColors.textHint,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusL,
+                        ),
                         borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusL,
+                        ),
                         borderSide: BorderSide(
-                          color: isOverLimit ? AppColors.error.withOpacity(0.5) : AppColors.border,
+                          color: isOverLimit
+                              ? AppColors.error.withOpacity(0.5)
+                              : AppColors.border,
                           width: 1,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusL,
+                        ),
                         borderSide: BorderSide(
-                          color: isOverLimit ? AppColors.error : AppColors.primary,
+                          color: isOverLimit
+                              ? AppColors.error
+                              : AppColors.primary,
                           width: 2,
                         ),
                       ),
                       filled: true,
-                      fillColor: isOverLimit ? AppColors.error.withOpacity(0.1) : AppColors.surface,
+                      fillColor: isOverLimit
+                          ? AppColors.error.withOpacity(0.1)
+                          : AppColors.surface,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppDimensions.paddingL,
                         vertical: AppDimensions.paddingM,
                       ),
                       counterStyle: isOverLimit
                           ? const TextStyle(color: AppColors.error)
-                          : AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+                          : AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textMuted,
+                            ),
                     ),
                     minLines: 1,
                     maxLines: 4,
                     maxLength: _maxLength,
                     maxLengthEnforcement: MaxLengthEnforcement.none,
-                    buildCounter: (context,
-                        {required currentLength,
-                        required isFocused,
-                        maxLength}) {
-                      return Container(
-                        padding: const EdgeInsets.only(right: 8, bottom: 4),
-                        child: Text(
-                          '$currentLength/$_maxLength',
-                          style: TextStyle(
-                            color: isOverLimit ? AppColors.error : AppColors.textMuted,
-                            fontSize: 12,
-                          ),
-                        ),
-                      );
-                    },
+                    buildCounter:
+                        (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) {
+                          return Container(
+                            padding: const EdgeInsets.only(right: 8, bottom: 4),
+                            child: Text(
+                              '$currentLength/$_maxLength',
+                              style: TextStyle(
+                                color: isOverLimit
+                                    ? AppColors.error
+                                    : AppColors.textMuted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          );
+                        },
                   );
                 },
               ),
@@ -155,15 +165,15 @@ class _ChatInputState extends State<ChatInput> {
             const SizedBox(width: AppDimensions.paddingS),
             Container(
               decoration: BoxDecoration(
-                gradient: _isExceedingLimit 
-                    ? null 
+                gradient: _isExceedingLimit
+                    ? null
                     : const LinearGradient(
                         colors: [AppColors.primary, AppColors.primaryLight],
                       ),
                 color: _isExceedingLimit ? AppColors.textMuted : null,
                 shape: BoxShape.circle,
-                boxShadow: _isExceedingLimit 
-                    ? null 
+                boxShadow: _isExceedingLimit
+                    ? null
                     : [
                         BoxShadow(
                           color: AppColors.primary.withOpacity(0.4),

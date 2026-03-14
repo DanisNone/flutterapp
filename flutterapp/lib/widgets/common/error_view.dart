@@ -8,11 +8,7 @@ class ErrorView extends StatelessWidget {
   final String error;
   final VoidCallback? onRetry;
 
-  const ErrorView({
-    super.key,
-    required this.error,
-    this.onRetry,
-  });
+  const ErrorView({super.key, required this.error, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -39,16 +35,11 @@ class ErrorView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppDimensions.paddingL),
-            Text(
-              'Произошла ошибка',
-              style: AppTextStyles.headline3,
-            ),
+            Text('Произошла ошибка', style: AppTextStyles.headline3),
             const SizedBox(height: AppDimensions.paddingS),
             Text(
               error,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.error,
-              ),
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[

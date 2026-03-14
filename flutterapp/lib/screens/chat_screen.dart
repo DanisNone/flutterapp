@@ -48,9 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     widget.manager.setToken(widget.token);
 
-    _listener = ChatListener(
-      newMessage: _handleIncomingMessage,
-    );
+    _listener = ChatListener(newMessage: _handleIncomingMessage);
     _scrollController.addListener(_onScroll);
 
     widget.manager.addListener(_listener);
@@ -58,15 +56,12 @@ class _ChatScreenState extends State<ChatScreen> {
     _init();
   }
 
-  Future<void> _init() async 
-  {
+  Future<void> _init() async {
     late User user;
     while (true) {
       try {
         user = await getUser(widget.token);
-        widget.manager.loadLast(
-          widget.conversationId
-        );
+        widget.manager.loadLast(widget.conversationId);
         break;
       } catch (e) {
         if (!mounted) return;
@@ -85,7 +80,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _handleIncomingMessage(Message message, bool isNew) {
     // если список ещё пуст/не инициализирован — не пытаемся читать .first
-    if (_messages != null && _messages!.isNotEmpty && _messages!.first.id == message.id) return;
+    if (_messages != null &&
+        _messages!.isNotEmpty &&
+        _messages!.first.id == message.id)
+      return;
     try {
       if (!mounted) return;
 
@@ -142,20 +140,19 @@ class _ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       _messages ??= []; // гарантируем, что список инициализирован
-      _messages!.add(Message(
-        id: null,
-        text: text,
-        senderId: widget.userId,
-        createdAt: DateTime.now().toUtc(),
-        conversationId: widget.conversationId
-      ));
+      _messages!.add(
+        Message(
+          id: null,
+          text: text,
+          senderId: widget.userId,
+          createdAt: DateTime.now().toUtc(),
+          conversationId: widget.conversationId,
+        ),
+      );
       _scrollToBottom();
     });
 
-    widget.manager.sendMessage(
-      widget.conversationId,
-      text,
-    );
+    widget.manager.sendMessage(widget.conversationId, text);
 
     _controller.clear();
   }
@@ -164,9 +161,7 @@ class _ChatScreenState extends State<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         final min = _scrollController.position.minScrollExtent;
-        _scrollController.jumpTo(
-          min
-        );
+        _scrollController.jumpTo(min);
       }
     });
   }
@@ -181,6 +176,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     }
   }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -212,13 +208,8 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         body: Column(
           children: [
-            Expanded(
-              child: _buildBody(),
-            ),
-            ChatInput(
-              controller: _controller,
-              onSend: _sendMessage
-            ),
+            Expanded(child: _buildBody()),
+            ChatInput(controller: _controller, onSend: _sendMessage),
           ],
         ),
       ),
@@ -233,16 +224,16 @@ class _ChatScreenState extends State<ChatScreen> {
         return GlassContainer(
           borderRadius: 24,
           opacity: 0.08,
-          border: Border.all(
-            color: AppColors.borderGlow,
-            width: 1.5,
-          ),
+          border: Border.all(color: AppColors.borderGlow, width: 1.5),
           child: SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.copy, color: AppColors.textSecondary),
+                  leading: const Icon(
+                    Icons.copy,
+                    color: AppColors.textSecondary,
+                  ),
                   title: Text('Копировать', style: AppTextStyles.bodyLarge),
                   onTap: () {
                     Navigator.pop(context);
@@ -252,7 +243,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (message.senderId == _user?.id)
                   ListTile(
                     leading: const Icon(Icons.delete, color: AppColors.error),
-                    title: Text('Удалить', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.error)),
+                    title: Text(
+                      'Удалить',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppColors.error,
+                      ),
+                    ),
                     onTap: () {
                       Navigator.pop(context);
                       _deleteMessage(message);
@@ -273,9 +269,7 @@ class _ChatScreenState extends State<ChatScreen> {
         content: const Text('Сообщение скопировано'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -286,9 +280,7 @@ class _ChatScreenState extends State<ChatScreen> {
         content: const Text('Это не реализовано'),
         backgroundColor: AppColors.warning,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -323,7 +315,8 @@ class _ChatScreenState extends State<ChatScreen> {
           if (index == messagesList.length - 1) {
             showDateHeader = true;
           } else {
-            final previousMessage = messagesList[messagesList.length - index - 2];
+            final previousMessage =
+                messagesList[messagesList.length - index - 2];
             if (!_isSameDay(previousMessage.createdAt, message.createdAt)) {
               showDateHeader = true;
             }
@@ -336,7 +329,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                   child: GlassContainer(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
                     borderRadius: 20,
                     opacity: 0.04,
                     child: Text(

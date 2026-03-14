@@ -34,10 +34,7 @@ class ConversationCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
       borderRadius: AppDimensions.radiusL,
       opacity: 0.04,
-      border: Border.all(
-        color: AppColors.border,
-        width: 1,
-      ),
+      border: Border.all(color: AppColors.border, width: 1),
       child: ListTile(
         contentPadding: const EdgeInsets.all(AppDimensions.paddingM),
         leading: Container(
@@ -71,9 +68,7 @@ class ConversationCard extends StatelessWidget {
         ),
         title: Text(
           name,
-          style: AppTextStyles.title.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: info.lastMessage != null
             ? Column(
@@ -118,10 +113,7 @@ class ConversationCard extends StatelessWidget {
               width: 1,
             ),
           ),
-          child: const Icon(
-            Icons.chevron_right,
-            color: AppColors.primary,
-          ),
+          child: const Icon(Icons.chevron_right, color: AppColors.primary),
         ),
         onTap: onTap,
       ),

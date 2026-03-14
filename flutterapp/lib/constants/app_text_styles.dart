@@ -103,16 +103,8 @@ class AppTextStyles {
     letterSpacing: 2.0,
     fontFamily: 'Inter',
     shadows: [
-      Shadow(
-        color: AppColors.primary,
-        blurRadius: 20,
-        offset: Offset(0, 0),
-      ),
-      Shadow(
-        color: AppColors.glow,
-        blurRadius: 40,
-        offset: Offset(0, 0),
-      ),
+      Shadow(color: AppColors.primary, blurRadius: 20, offset: Offset(0, 0)),
+      Shadow(color: AppColors.glow, blurRadius: 40, offset: Offset(0, 0)),
     ],
   );
 }

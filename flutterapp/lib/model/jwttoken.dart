@@ -42,7 +42,7 @@ class JWTToken {
     final res = await http.post(
       Uri.parse(refreshUrl),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({"refresh_token": refreshToken})
+      body: jsonEncode({"refresh_token": refreshToken}),
     );
     if (res.statusCode == 200) {
       final token = JWTToken.fromRawJson(res.body);

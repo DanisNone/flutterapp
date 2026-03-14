@@ -15,9 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Chat',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const GradientBackground(
-        child: LoginScreen(),
-      ),
+      home: const GradientBackground(child: LoginScreen()),
     );
   }
 }

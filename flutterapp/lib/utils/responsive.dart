@@ -41,7 +41,13 @@ class Responsive {
 
 // Адаптивный билдер
 class ResponsiveBuilder extends StatelessWidget {
-  final Widget Function(BuildContext context, bool isMobile, bool isTablet, bool isDesktop) builder;
+  final Widget Function(
+    BuildContext context,
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+  )
+  builder;
 
   const ResponsiveBuilder({super.key, required this.builder});
 
@@ -51,7 +57,8 @@ class ResponsiveBuilder extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final isMobile = width < Responsive.mobile;
-        final isTablet = width >= Responsive.mobile && width < Responsive.desktop;
+        final isTablet =
+            width >= Responsive.mobile && width < Responsive.desktop;
         final isDesktop = width >= Responsive.desktop;
 
         return builder(context, isMobile, isTablet, isDesktop);

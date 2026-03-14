@@ -61,7 +61,9 @@ class AuthForm extends StatelessWidget {
                   onPressed: isLoading ? null : onSubmit,
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusM,
+                      ),
                     ),
                   ),
                   child: isLoading
@@ -70,10 +72,7 @@ class AuthForm extends StatelessWidget {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(
-                          submitText,
-                          style: const TextStyle(fontSize: 16),
-                        ),
+                      : Text(submitText, style: const TextStyle(fontSize: 16)),
                 ),
               ),
               if (footer != null) ...[

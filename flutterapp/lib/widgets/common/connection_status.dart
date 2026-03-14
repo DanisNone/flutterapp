@@ -5,10 +5,7 @@ import 'package:flutterapp/constants/app_text_styles.dart';
 class ConnectionStatus extends StatelessWidget {
   final bool isConnected;
 
-  const ConnectionStatus({
-    super.key,
-    required this.isConnected,
-  });
+  const ConnectionStatus({super.key, required this.isConnected});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +20,8 @@ class ConnectionStatus extends StatelessWidget {
             color: isConnected ? AppColors.online : AppColors.offline,
             boxShadow: [
               BoxShadow(
-                color: (isConnected ? AppColors.online : AppColors.offline).withOpacity(0.5),
+                color: (isConnected ? AppColors.online : AppColors.offline)
+                    .withOpacity(0.5),
                 blurRadius: 8,
                 spreadRadius: 2,
               ),

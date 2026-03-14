@@ -115,10 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.all(32),
                 borderRadius: 20,
                 opacity: 0.06,
-                border: Border.all(
-                  color: AppColors.borderGlow,
-                  width: 1.5,
-                ),
+                border: Border.all(color: AppColors.borderGlow, width: 1.5),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -192,7 +189,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const GradientBackground(child: RegisterScreen()),
+                                    builder: (context) =>
+                                        const GradientBackground(
+                                          child: RegisterScreen(),
+                                        ),
                                   ),
                                 );
                               },

@@ -14,8 +14,13 @@ class SecureStorageService {
     String? accessToken = await _storage.read(key: 'accessToken');
     String? refreshToken = await _storage.read(key: 'refreshToken');
     String? tokenType = await _storage.read(key: 'tokenType');
-    if (accessToken == null || tokenType == null || refreshToken == null) return null;
-    return JWTToken(accessToken: accessToken, refreshToken: refreshToken, tokenType: tokenType);
+    if (accessToken == null || tokenType == null || refreshToken == null)
+      return null;
+    return JWTToken(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      tokenType: tokenType,
+    );
   }
 
   Future<void> deleteJWTToken() async {

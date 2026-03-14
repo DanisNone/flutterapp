@@ -31,7 +31,7 @@ class MessageBubble extends StatelessWidget {
               : MediaQuery.of(context).size.width * 0.7,
         ),
         decoration: BoxDecoration(
-          gradient: isMine 
+          gradient: isMine
               ? const LinearGradient(
                   colors: [AppColors.primary, AppColors.primaryLight],
                   begin: Alignment.topLeft,
@@ -40,7 +40,7 @@ class MessageBubble extends StatelessWidget {
               : null,
           color: isMine ? null : AppColors.theirMessage,
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          boxShadow: isMine 
+          boxShadow: isMine
               ? [
                   BoxShadow(
                     color: AppColors.primary.withOpacity(0.3),
@@ -62,7 +62,9 @@ class MessageBubble extends StatelessWidget {
           children: [
             Text(
               text,
-              style: isMine ? AppTextStyles.myMessage : AppTextStyles.theirMessage,
+              style: isMine
+                  ? AppTextStyles.myMessage
+                  : AppTextStyles.theirMessage,
             ),
             const SizedBox(height: AppDimensions.paddingXS),
             Row(
@@ -88,9 +90,9 @@ class MessageBubble extends StatelessWidget {
                         isMine ? Colors.white : AppColors.textSecondary,
                       ),
                     ),
-                  )
+                  ),
               ],
-            )
+            ),
           ],
         ),
       ),

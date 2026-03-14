@@ -2,14 +2,10 @@ import 'package:flutterapp/routes/all_routes.dart' show authUrl;
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:http/http.dart' as http;
 
-
 Future<JWTToken> login(String email, String password) async {
   final res = await http.post(
     Uri.parse(authUrl),
-    body: {
-      "username": email,
-      "password": password,
-    },
+    body: {"username": email, "password": password},
   );
 
   if (res.statusCode == 200) {

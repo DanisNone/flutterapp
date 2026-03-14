@@ -57,7 +57,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ConversationsScreen(token: token)),
+        MaterialPageRoute(
+          builder: (context) => ConversationsScreen(token: token),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -75,9 +77,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         content: Text(message),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -96,10 +96,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.all(32),
                 borderRadius: 20,
                 opacity: 0.06,
-                border: Border.all(
-                  color: AppColors.borderGlow,
-                  width: 1.5,
-                ),
+                border: Border.all(color: AppColors.borderGlow, width: 1.5),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -109,7 +106,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const LinearGradient(
-                          colors: [AppColors.secondary, AppColors.secondaryLight],
+                          colors: [
+                            AppColors.secondary,
+                            AppColors.secondaryLight,
+                          ],
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -192,7 +192,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const GradientBackground(child: LoginScreen()),
+                                    builder: (context) =>
+                                        const GradientBackground(
+                                          child: LoginScreen(),
+                                        ),
                                   ),
                                 );
                               },

@@ -7,13 +7,11 @@ import 'package:flutterapp/theme/app_theme.dart';
 class CreateConversationSheet extends StatefulWidget {
   final Function(int userId) onCreate;
 
-  const CreateConversationSheet({
-    super.key,
-    required this.onCreate,
-  });
+  const CreateConversationSheet({super.key, required this.onCreate});
 
   @override
-  State<CreateConversationSheet> createState() => _CreateConversationSheetState();
+  State<CreateConversationSheet> createState() =>
+      _CreateConversationSheetState();
 }
 
 class _CreateConversationSheetState extends State<CreateConversationSheet> {
@@ -27,7 +25,8 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
         left: AppDimensions.paddingL,
         right: AppDimensions.paddingL,
         top: AppDimensions.paddingXL,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingXL,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingXL,
       ),
       child: Form(
         key: _formKey,
@@ -63,21 +62,18 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                  borderSide: BorderSide(
-                    color: AppColors.border,
-                    width: 1,
-                  ),
+                  borderSide: BorderSide(color: AppColors.border, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                  borderSide: BorderSide(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
+                  borderSide: BorderSide(color: AppColors.primary, width: 2),
                 ),
                 filled: true,
                 fillColor: AppColors.surface,
-                prefixIcon: const Icon(Icons.person_add, color: AppColors.primary),
+                prefixIcon: const Icon(
+                  Icons.person_add,
+                  color: AppColors.primary,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -101,12 +97,11 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
                         vertical: AppDimensions.paddingL,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusL,
+                        ),
                       ),
-                      side: BorderSide(
-                        color: AppColors.border,
-                        width: 1.5,
-                      ),
+                      side: BorderSide(color: AppColors.border, width: 1.5),
                     ),
                     child: Text(
                       'Отмена',

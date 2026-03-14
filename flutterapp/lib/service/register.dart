@@ -3,7 +3,13 @@ import 'package:flutterapp/routes/all_routes.dart' show registerUrl;
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:http/http.dart' as http;
 
-Future<JWTToken> register(String email, String username, String fullName, String password, String confirmPassword) async {
+Future<JWTToken> register(
+  String email,
+  String username,
+  String fullName,
+  String password,
+  String confirmPassword,
+) async {
   if (password != confirmPassword) {
     throw Exception('Пароли не совпадают');
   }
@@ -13,19 +19,19 @@ Future<JWTToken> register(String email, String username, String fullName, String
   }
 
   try {
-    final res = await http.post(
-      Uri.parse(registerUrl),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        "email": email,
-        "username": username,
-        "full_name": fullName,
-        "password": password,
-        "confirm_password": confirmPassword,
-      }),
-    ).timeout(const Duration(seconds: 10));
+    final res = await http
+        .post(
+          Uri.parse(registerUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            "email": email,
+            "username": username,
+            "full_name": fullName,
+            "password": password,
+            "confirm_password": confirmPassword,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
     if (res.statusCode == 200 || res.statusCode == 201) {
       return JWTToken.fromRawJson(res.body);
     } else {

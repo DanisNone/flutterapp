@@ -23,10 +23,7 @@ import 'package:flutterapp/theme/app_theme.dart';
 class ConversationsScreen extends StatefulWidget {
   final JWTToken token;
 
-  const ConversationsScreen({
-    super.key,
-    required this.token,
-  });
+  const ConversationsScreen({super.key, required this.token});
 
   @override
   State<ConversationsScreen> createState() => _ConversationsScreenState();
@@ -43,14 +40,16 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   void initState() {
     super.initState();
     manager.setToken(widget.token);
-    manager.addListener(ChatListener(
-      newMessage: _lastMessageUpdate,
-      conversations: (c) {
-        setState(() {
-          _conversations = c;
-        });
-      }
-    ));
+    manager.addListener(
+      ChatListener(
+        newMessage: _lastMessageUpdate,
+        conversations: (c) {
+          setState(() {
+            _conversations = c;
+          });
+        },
+      ),
+    );
     _loadConversations();
   }
 
@@ -114,13 +113,8 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       builder: (context) => GlassContainer(
         borderRadius: 24,
         opacity: 0.08,
-        border: Border.all(
-          color: AppColors.borderGlow,
-          width: 1.5,
-        ),
-        child: CreateConversationSheet(
-          onCreate: _createConversation,
-        ),
+        border: Border.all(color: AppColors.borderGlow, width: 1.5),
+        child: CreateConversationSheet(onCreate: _createConversation),
       ),
     );
   }
@@ -146,7 +140,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$message (ID: $conversationId)'),
-          backgroundColor: alreadyExists ? AppColors.warning : AppColors.success,
+          backgroundColor: alreadyExists
+              ? AppColors.warning
+              : AppColors.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -192,10 +188,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       borderRadius: 16,
       opacity: 0.06,
-      border: Border.all(
-        color: AppColors.primary.withOpacity(0.3),
-        width: 1,
-      ),
+      border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
       child: Row(
         children: [
           Container(
@@ -248,10 +241,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Мои переписки',
-          style: AppTextStyles.headline3,
-        ),
+        Text('Мои переписки', style: AppTextStyles.headline3),
         if (!_isLoading && _conversations != null && _conversations!.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(
@@ -292,10 +282,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     }
 
     if (_errorMessage != null) {
-      return ErrorView(
-        error: _errorMessage!,
-        onRetry: _refresh,
-      );
+      return ErrorView(error: _errorMessage!, onRetry: _refresh);
     }
 
     if (_conversations!.isEmpty) {
@@ -358,7 +345,10 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 SecureStorageService().deleteJWTToken();
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (_) => const GradientBackground(child: LoginScreen())),
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const GradientBackground(child: LoginScreen()),
+                  ),
                   (route) => false,
                 );
               },
@@ -396,9 +386,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 const SizedBox(height: AppDimensions.paddingXL),
                 _buildHeader(),
                 const SizedBox(height: AppDimensions.paddingL),
-                Expanded(
-                  child: _buildContent(),
-                ),
+                Expanded(child: _buildContent()),
               ],
             ),
           ),

@@ -19,7 +19,7 @@ class ChatListener {
     this.connection,
     this.newMessage,
     this.error,
-    this.conversations
+    this.conversations,
   });
 }
 
@@ -51,9 +51,9 @@ class ChatManager {
     try {
       await _token!.updateToken();
       _cancelReconnectTimer();
-      final uri = Uri.parse(webSocketUrl).replace(
-        queryParameters: {"token": _token!.accessToken},
-      );
+      final uri = Uri.parse(
+        webSocketUrl,
+      ).replace(queryParameters: {"token": _token!.accessToken});
 
       _isConnected = true;
       _channel = WebSocketChannel.connect(uri);
@@ -87,14 +87,10 @@ class ChatManager {
 
   void loadConversations() {
     _connect();
-    _channel!.sink.add(jsonEncode({
-      "type": "get_conversations",
-    }));
+    _channel!.sink.add(jsonEncode({"type": "get_conversations"}));
   }
 
-  void loadLast(
-    int conversationId
-  ) async {
+  void loadLast(int conversationId) async {
     _connect();
 
     final payload = {
@@ -102,14 +98,12 @@ class ChatManager {
       "data": {
         "conversation_id": conversationId,
         "last_message_date": DateTime.now().toUtc().toString(),
-      }
+      },
     };
     _channel!.sink.add(jsonEncode(payload));
   }
 
-  void loadBefore(
-    Message message
-  ) async {
+  void loadBefore(Message message) async {
     _connect();
 
     final payload = {
@@ -117,7 +111,7 @@ class ChatManager {
       "data": {
         "conversation_id": message.conversationId,
         "last_message_date": message.createdAt.toString(),
-      }
+      },
     };
     _channel!.sink.add(jsonEncode(payload));
   }
@@ -152,23 +146,23 @@ class ChatManager {
         return;
       }
       if (decoded["type"] == "conversations") {
-        List<ConversationInfo> convs = (
-          decoded["data"] as List
-        ).map((o) => ConversationInfo.fromJson(o as Map<String, dynamic>)).toList();
+        List<ConversationInfo> convs = (decoded["data"] as List)
+            .map((o) => ConversationInfo.fromJson(o as Map<String, dynamic>))
+            .toList();
         for (var listener in _listeners) {
-          try {listener.conversations?.call(convs);}
-          catch (e) {
+          try {
+            listener.conversations?.call(convs);
+          } catch (e) {
             // игнорим ошибки в callback
           }
         }
-      } else
-      if (decoded["type"] == "new_message") {
+      } else if (decoded["type"] == "new_message") {
         final data = Map<String, dynamic>.from(decoded["data"] as Map);
         _addMessage(data);
       } else if (decoded["type"] == "messages") {
         final data = List<Map<String, dynamic>>.from(decoded["data"] as List);
         final messages = data.map(Message.fromJson);
-        for (var message in  messages) {
+        for (var message in messages) {
           for (var listener in _listeners) {
             try {
               listener.newMessage?.call(message, false);
@@ -178,9 +172,7 @@ class ChatManager {
       } else {
         throw Exception("unknown websocket answer type: ${decoded["type"]}");
       }
-
-    }
-    catch (e) {
+    } catch (e) {
       _onError(e);
     }
   }
@@ -251,7 +243,7 @@ class ChatManager {
           "data": {
             "conversation_id": _messagesQueue.first.$1,
             "text": _messagesQueue.first.$2,
-          }
+          },
         };
         _channel!.sink.add(jsonEncode(payload));
         _messagesQueue.removeAt(0);
@@ -261,6 +253,7 @@ class ChatManager {
       }
     }
   }
+
   void sendMessage(int conversationId, String text) {
     _messagesQueue.add((conversationId, text));
     _sendMessage();

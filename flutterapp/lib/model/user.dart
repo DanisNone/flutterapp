@@ -1,9 +1,6 @@
 import 'dart:convert';
 
-enum UserRole {
-  user,
-  admin
-}
+enum UserRole { user, admin }
 
 class User {
   final int id;

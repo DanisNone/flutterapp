@@ -30,41 +30,49 @@ class AppTheme {
 
       // Elevated button with neon glow
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          ),
-          elevation: 0,
-          shadowColor: AppColors.primary.withOpacity(0.5),
-          textStyle: AppTextStyles.button,
-        ).copyWith(
-          overlayColor: WidgetStateProperty.all(
-            AppColors.glow.withOpacity(0.2),
-          ),
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(
+                double.infinity,
+                AppDimensions.buttonHeight,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+              ),
+              elevation: 0,
+              shadowColor: AppColors.primary.withOpacity(0.5),
+              textStyle: AppTextStyles.button,
+            ).copyWith(
+              overlayColor: WidgetStateProperty.all(
+                AppColors.glow.withOpacity(0.2),
+              ),
+            ),
       ),
 
       // Outlined button with neon border
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
-          side: BorderSide(
-            color: AppColors.primary.withOpacity(0.5),
-            width: 1.5,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          ),
-          textStyle: AppTextStyles.button,
-        ).copyWith(
-          overlayColor: WidgetStateProperty.all(
-            AppColors.primary.withOpacity(0.1),
-          ),
-        ),
+        style:
+            OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              minimumSize: const Size(
+                double.infinity,
+                AppDimensions.buttonHeight,
+              ),
+              side: BorderSide(
+                color: AppColors.primary.withOpacity(0.5),
+                width: 1.5,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+              ),
+              textStyle: AppTextStyles.button,
+            ).copyWith(
+              overlayColor: WidgetStateProperty.all(
+                AppColors.primary.withOpacity(0.1),
+              ),
+            ),
       ),
 
       // Input decoration with glass effect
@@ -77,29 +85,18 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          borderSide: BorderSide(
-            color: AppColors.border,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: AppColors.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          borderSide: BorderSide(
-            color: AppColors.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          borderSide: BorderSide(
-            color: AppColors.error,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: AppColors.error, width: 1),
         ),
         contentPadding: const EdgeInsets.all(AppDimensions.paddingL),
-        hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textHint,
-        ),
+        hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textHint),
         labelStyle: AppTextStyles.bodyMedium.copyWith(
           color: AppColors.textSecondary,
         ),
@@ -111,10 +108,7 @@ class AppTheme {
         color: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          side: BorderSide(
-            color: AppColors.border,
-            width: 1,
-          ),
+          side: BorderSide(color: AppColors.border, width: 1),
         ),
       ),
 
@@ -156,10 +150,7 @@ class AppTheme {
       ),
 
       // Divider theme
-      dividerTheme: DividerThemeData(
-        color: AppColors.border,
-        thickness: 1,
-      ),
+      dividerTheme: DividerThemeData(color: AppColors.border, thickness: 1),
 
       // Icon theme
       iconTheme: IconThemeData(
@@ -219,10 +210,7 @@ class GlassContainer extends StatelessWidget {
                 ],
               ),
               borderRadius: BorderRadius.circular(borderRadius),
-              border: border ?? Border.all(
-                color: AppColors.border,
-                width: 1,
-              ),
+              border: border ?? Border.all(color: AppColors.border, width: 1),
             ),
             child: child,
           ),

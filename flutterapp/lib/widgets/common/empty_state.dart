@@ -43,11 +43,7 @@ class EmptyState extends StatelessWidget {
                   width: 2,
                 ),
               ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: AppColors.primary,
-              ),
+              child: Icon(icon, size: 64, color: AppColors.primary),
             ),
             const SizedBox(height: AppDimensions.paddingL),
             Text(
@@ -59,10 +55,7 @@ class EmptyState extends StatelessWidget {
             ),
             if (buttonText != null && onButtonPressed != null) ...[
               const SizedBox(height: AppDimensions.paddingXL),
-              NeonButton(
-                onPressed: onButtonPressed,
-                child: Text(buttonText!),
-              ),
+              NeonButton(onPressed: onButtonPressed, child: Text(buttonText!)),
             ],
           ],
         ),
