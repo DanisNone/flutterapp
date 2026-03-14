@@ -6,6 +6,7 @@ import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/error_view.dart';
+import 'package:flutterapp/widgets/common/my_snack_bar.dart';
 import 'package:flutterapp/widgets/common/responsive_container.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
@@ -64,19 +65,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    // TODO: Implement save profile API call
     setState(() {
       _isEditing = false;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Профиль обновлен'),
+      MySnackBar(
+        text: 'Профиль обновлен',
         backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
       ),
     );
   }
@@ -265,9 +261,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         controller: _fullNameController,
       ),
       _buildInfoCard(
-        title: 'Email',
-        value: _user!.email,
-        icon: Icons.email_outlined,
+        title: 'О себе',
+        value: _user!.bio ?? '',
+        icon: Icons.info_outline,
+        isEditable: true,
+        controller: _bioController,
+        maxLines: 3,
       ),
       _buildInfoCard(
         title: 'Дата регистрации',
@@ -275,12 +274,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         icon: Icons.calendar_today,
       ),
       _buildInfoCard(
-        title: 'О себе',
-        value: _user!.bio ?? '',
-        icon: Icons.info_outline,
-        isEditable: true,
-        controller: _bioController,
-        maxLines: 3,
+        title: 'Email',
+        value: _user!.email,
+        icon: Icons.email_outlined,
       ),
     ];
   }
@@ -325,79 +321,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildRoleBadge(),
           const SizedBox(height: AppDimensions.paddingXL),
 
-          // Info Cards — адаптивное расположение
-          LayoutBuilder(
-            builder: (context, constraints) {
-              // Если ширина больше 600, используем сетку с двумя колонками
-              if (constraints.maxWidth > 600) {
-                return GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: AppDimensions.paddingM,
-                  mainAxisSpacing: AppDimensions.paddingM,
-                  childAspectRatio: 3, // Примерное соотношение, можно подобрать
-                  children: _buildInfoCards(),
-                );
-              } else {
-                // Для мобильных — обычная колонка
-                return Column(
-                  children: _buildInfoCards()
-                      .expand((widget) => [
-                            widget,
-                            const SizedBox(height: AppDimensions.paddingM)
-                          ])
-                      .toList()
-                    ..removeLast(), // убираем последний отступ
-                );
-              }
-            },
+          // Info Cards — всегда вертикальный список (без сетки)
+          Column(
+            children: _buildInfoCards()
+                .expand((widget) => [
+                      widget,
+                      const SizedBox(height: AppDimensions.paddingM)
+                    ])
+                .toList()
+              ..removeLast(),
           ),
-
-          const SizedBox(height: AppDimensions.paddingXL),
-
-          // Action Buttons
-          if (_isEditing)
-            Row(
-              children: [
-                Expanded(
-                  child: _buildActionButton(
-                    'Отмена',
-                    Icons.close,
-                    AppColors.error,
-                    () => setState(() => _isEditing = false),
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.paddingM),
-                Expanded(
-                  child: _buildActionButton(
-                    'Сохранить',
-                    Icons.check,
-                    AppColors.success,
-                    _saveProfile,
-                  ),
-                ),
-              ],
-            )
-          else
-            _buildActionButton(
-              'Редактировать профиль',
-              Icons.edit,
-              AppColors.primary,
-              () => setState(() => _isEditing = true),
-            ),
-
-          const SizedBox(height: AppDimensions.paddingM),
-
-          // Logout Button
-          _buildActionButton(
-            'Выйти из аккаунта',
-            Icons.exit_to_app,
-            AppColors.error.withOpacity(0.8),
-            _logout,
-          ),
-
-          const SizedBox(height: AppDimensions.paddingXL),
         ],
       ),
     );
@@ -464,16 +397,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: Colors.transparent,
           foregroundColor: AppColors.textPrimary,
           actions: [
-            if (!_isLoading && _user != null && !_isEditing)
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => setState(() => _isEditing = true),
-                tooltip: 'Редактировать',
-              ),
+
+            if (!_isLoading && _user != null)
+              if (_isEditing) ...[
+                IconButton(
+                  icon: const Icon(Icons.check),
+                  tooltip: 'Сохранить',
+                  onPressed: _saveProfile,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Отмена',
+                  onPressed: () => setState(() => _isEditing = false),
+                ),
+              ] else ...[
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Редактировать',
+                  onPressed: () => setState(() => _isEditing = true),
+                ),
+              ],
+
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Выйти',
+              onPressed: _logout,
+            ),
+
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: _loadUserProfile,
               tooltip: 'Обновить',
+              onPressed: _loadUserProfile,
             ),
           ],
         ),

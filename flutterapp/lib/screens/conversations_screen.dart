@@ -13,6 +13,7 @@ import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/error_view.dart';
 import 'package:flutterapp/widgets/common/empty_state.dart';
+import 'package:flutterapp/widgets/common/my_snack_bar.dart';
 import 'package:flutterapp/widgets/common/responsive_container.dart';
 import 'package:flutterapp/widgets/conversations/conversation_card.dart';
 import 'package:flutterapp/widgets/conversations/create_conversation_sheet.dart';
@@ -139,15 +140,11 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           : 'Переписка создана';
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$message (ID: $conversationId)'),
+        MySnackBar(
+          text: '$message (ID: $conversationId)',
           backgroundColor: alreadyExists
               ? AppColors.warning
               : AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
       );
 
@@ -171,13 +168,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка: $e'),
+        MySnackBar(
+          text: 'Ошибка: $e',
           backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
       );
     }

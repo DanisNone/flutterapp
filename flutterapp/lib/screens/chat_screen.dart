@@ -15,6 +15,7 @@ import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
+import 'package:flutterapp/widgets/common/my_snack_bar.dart';
 
 class ChatScreen extends StatefulWidget {
   final int conversationId;
@@ -129,14 +130,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
     if (!widget.manager.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Нет соединения с сервером'),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+        MySnackBar(text: 'Нет соединения с сервером', backgroundColor: AppColors.warning)
       );
     }
 
@@ -266,24 +260,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _copyMessage(Message message) {
     Clipboard.setData(ClipboardData(text: message.text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Сообщение скопировано'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
   }
 
   Future<void> _deleteMessage(Message message) async {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Это не реализовано'),
-        backgroundColor: AppColors.warning,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+      MySnackBar(
+        text: 'Это не реализовано', backgroundColor: AppColors.warning,
+      )
     );
   }
 
