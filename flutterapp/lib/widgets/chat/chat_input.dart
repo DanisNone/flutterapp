@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutterapp/constants/app_colors.dart';
@@ -43,17 +44,27 @@ class _ChatInputState extends State<ChatInput> {
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    final platform = defaultTargetPlatform;
+
+    // На мобильных не перехватываем Enter → обычный перенос строки
+    if (platform == TargetPlatform.android || platform == TargetPlatform.iOS) {
+      return KeyEventResult.ignored;
+    }
+
+    // На desktop/web Enter отправляет сообщение
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
       final shiftPressed = HardwareKeyboard.instance.logicalKeysPressed.any(
-        (key) => key == LogicalKeyboardKey.shiftLeft || key == LogicalKeyboardKey.shiftRight,
+        (key) =>
+            key == LogicalKeyboardKey.shiftLeft ||
+            key == LogicalKeyboardKey.shiftRight,
       );
 
       if (!shiftPressed) {
         _handleSubmitted();
-        return KeyEventResult.handled; // Prevent newline insertion
+        return KeyEventResult.handled;
       }
-      // Shift+Enter → allow default (newline)
     }
+
     return KeyEventResult.ignored;
   }
 
