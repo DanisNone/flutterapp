@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
+import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
@@ -89,36 +90,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAvatar() {
-    final hasAvatar = _user?.avatarUrl != null && _user!.avatarUrl!.isNotEmpty;
-
-    return Container(
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.borderGlow,
-          width: 2,
-        ),
-        image: hasAvatar
-            ? DecorationImage(
-                image: NetworkImage(_user!.avatarUrl!),
-                fit: BoxFit.cover,
-              )
-            : null,
-      ),
-      child: !hasAvatar
-          ? const Icon(
-              Icons.person,
-              size: 60,
-              color: Colors.white,
-            )
-          : null,
+    String? avatarUrl = _user?.avatarUrl;
+    return ImageLoader().loadImage(
+      avatarUrl,
+      120,
+      const Icon(
+        Icons.person,
+        size: 60,
+        color: Colors.white,
+      )
     );
   }
 

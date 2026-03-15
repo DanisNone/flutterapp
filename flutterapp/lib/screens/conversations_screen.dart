@@ -7,6 +7,7 @@ import 'package:flutterapp/screens/chat_screen.dart';
 import 'package:flutterapp/screens/profile_screen.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/conversations.dart';
+import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/model/jwttoken.dart';
@@ -195,15 +196,10 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryLight],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
+            ImageLoader().loadImage(
+              _user!.avatarUrl,
+              48,
+              const Icon(
                 Icons.person,
                 color: Colors.white,
                 size: AppDimensions.iconM,

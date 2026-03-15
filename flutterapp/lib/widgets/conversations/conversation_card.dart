@@ -3,6 +3,8 @@ import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/model/conversation_info.dart';
+import 'package:flutterapp/model/user_info.dart';
+import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 
 class ConversationCard extends StatelessWidget {
@@ -20,7 +22,8 @@ class ConversationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String name = info.getName(currentUserId);
-
+    String? avatarUrl = info.getAvatarUrl(currentUserId);
+    
     return MyContainer(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
       borderRadius: AppDimensions.radiusL,
@@ -28,19 +31,8 @@ class ConversationCard extends StatelessWidget {
       border: Border.all(color: AppColors.border, width: 1),
       child: ListTile(
         contentPadding: const EdgeInsets.all(AppDimensions.paddingM),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.primaryLight],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
+        leading: ImageLoader().loadImage(
+          avatarUrl, 48, Center(child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '#',
               style: const TextStyle(
                 color: Colors.white,
@@ -48,8 +40,7 @@ class ConversationCard extends StatelessWidget {
                 fontSize: 18,
               ),
             ),
-          ),
-        ),
+          ),),
         title: Text(
           name,
           style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w600),
