@@ -121,14 +121,14 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _handleLoadMessage(List<Message> messages) {
-    setState(() {
       _messages ??= [];
-      for (var message in messages.reversed) {
-        if (_messages!.first.id != message.id) {
+      for (var message in messages) {
+        if (_messages!.isEmpty || _messages!.first.id != message.id) {
           _messages!.insert(0, message);
         }
       }
-    });
+
+    setState(() {});
   }
   void _sendMessage() {
     final text = _controller.text.trim();
