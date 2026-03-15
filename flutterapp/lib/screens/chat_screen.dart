@@ -364,6 +364,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String _formatDate(DateTime date) {
+    date = date.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final messageDate = DateTime(date.year, date.month, date.day);
