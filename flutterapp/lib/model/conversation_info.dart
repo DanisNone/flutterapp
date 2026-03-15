@@ -1,4 +1,3 @@
-import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/model/user_info.dart';
 
 class ConversationInfo {

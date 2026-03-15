@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/constants/app_colors.dart';
-import 'package:flutterapp/widgets/common/loading_indicator.dart';
 
 class AuthForm extends StatelessWidget {
   final String title;

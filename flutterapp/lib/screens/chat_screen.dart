@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutterapp/model/message.dart';
@@ -53,7 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _listener = ChatListener(
       newMessage: _handleIncomingMessage,
-      loadMessages: _handleLoadMessage
+      loadMessages: _handleLoadMessage,
     );
     _scrollController.addListener(_onScroll);
 
@@ -88,8 +86,9 @@ class _ChatScreenState extends State<ChatScreen> {
     // если список ещё пуст/не инициализирован — не пытаемся читать .first
     if (_messages != null &&
         _messages!.isNotEmpty &&
-        _messages!.first.id == message.id)
+        _messages!.first.id == message.id) {
       return;
+    }
     try {
       if (!mounted) return;
 
@@ -121,15 +120,16 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _handleLoadMessage(List<Message> messages) {
-      _messages ??= [];
-      for (var message in messages) {
-        if (_messages!.isEmpty || _messages!.first.id != message.id) {
-          _messages!.insert(0, message);
-        }
+    _messages ??= [];
+    for (var message in messages) {
+      if (_messages!.isEmpty || _messages!.first.id != message.id) {
+        _messages!.insert(0, message);
       }
+    }
 
     setState(() {});
   }
+
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;

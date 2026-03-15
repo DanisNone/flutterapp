@@ -17,10 +17,7 @@ Future<(int, bool)> getOrCreateDialog(
   );
   final Map<String, dynamic> data = json.decode(response.body);
   if (response.statusCode == 200) {
-    return (
-      data["id"] as int,
-      data["already_exists"] as bool,
-    );
+    return (data["id"] as int, data["already_exists"] as bool);
   }
   throw Exception(
     'Failed to create dialog: ${response.statusCode}; ${data["detail"]}',

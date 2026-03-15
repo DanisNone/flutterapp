@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/utils/responsive.dart';
-import 'package:flutterapp/constants/app_colors.dart';
 
 class ResponsiveContainer extends StatelessWidget {
   final Widget child;

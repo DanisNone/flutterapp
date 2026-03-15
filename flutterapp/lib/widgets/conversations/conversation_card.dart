@@ -3,7 +3,6 @@ import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/model/conversation_info.dart';
-import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 

@@ -19,14 +19,15 @@ Future<User> getUser(JWTToken token) async {
   }
 }
 
-Future<List<User>> searchUsers(JWTToken token, String query, {int limit = 20}) async {
+Future<List<User>> searchUsers(
+  JWTToken token,
+  String query, {
+  int limit = 20,
+}) async {
   await token.updateToken();
-  final uri = Uri.parse(searchUsersUrl).replace(
-    queryParameters: {
-      "q": query,
-      "limit": limit.toString()
-    }
-  );
+  final uri = Uri.parse(
+    searchUsersUrl,
+  ).replace(queryParameters: {"q": query, "limit": limit.toString()});
   final res = await http.get(
     uri,
     headers: {"Authorization": token.toHeaderValue()},

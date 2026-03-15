@@ -117,7 +117,10 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(text: 'Ошибка создания: $e', backgroundColor: AppColors.error),
+        MySnackBar(
+          text: 'Ошибка создания: $e',
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -144,7 +147,9 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
                     hintText: 'Введите имя пользователя...',
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusL,
+                      ),
                     ),
                     filled: true,
                     fillColor: AppColors.surfaceDark.withValues(alpha: 0.5),
@@ -169,18 +174,13 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
                     ),
                   ),
                 )
-              else if (_searchResults.isEmpty && _searchController.text.isNotEmpty)
+              else if (_searchResults.isEmpty &&
+                  _searchController.text.isNotEmpty)
                 const Expanded(
-                  child: Center(
-                    child: Text('Пользователи не найдены'),
-                  ),
+                  child: Center(child: Text('Пользователи не найдены')),
                 )
               else if (_searchResults.isEmpty)
-                const Expanded(
-                  child: Center(
-                    child: Text('Начните поиск'),
-                  ),
-                )
+                const Expanded(child: Center(child: Text('Начните поиск')))
               else
                 Expanded(
                   child: ListView.builder(
