@@ -5,6 +5,7 @@ import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
 import 'package:flutterapp/screens/profile_screen.dart';
+import 'package:flutterapp/screens/search_users_screen.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
@@ -330,15 +331,22 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             ),
           ],
         ),
-        floatingActionButton: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusCircle),
-          ),
-          child: FloatingActionButton(
-            onPressed: _openCreateConversationSheet,
-            backgroundColor: AppColors.primary,
-            child: const Icon(Icons.add, color: Colors.white),
-          ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            if (_user == null) return;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SearchUsersScreen(
+                  token: widget.token,
+                  manager: manager,
+                  currentUser: _user!,
+                ),
+              ),
+            );
+          },
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add, color: Colors.white),
         ),
         body: RefreshIndicator(
           onRefresh: _refresh,

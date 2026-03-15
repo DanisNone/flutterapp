@@ -8,7 +8,7 @@ const String logoutUrl = "$apiAuth/logout";
 const String refreshUrl = "$apiAuth/refresh";
 
 const String usersUrl = "$api_v1/users";
-
+const String searchUsersUrl = "$api_v1/users/search";
 const String getConversationsUrl = "$api_v1/get_conversations";
 const String getOrCreateDialogUrl = "$api_v1/get_or_create_dialog";
 
