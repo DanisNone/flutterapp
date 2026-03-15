@@ -130,7 +130,10 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
     if (!widget.manager.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(text: 'Нет соединения с сервером', backgroundColor: AppColors.warning)
+        MySnackBar(
+          text: 'Нет соединения с сервером',
+          backgroundColor: AppColors.warning,
+        ),
       );
     }
 
@@ -195,10 +198,7 @@ class _ChatScreenState extends State<ChatScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             borderRadius: 12,
             opacity: 0.04,
-            child: Text(
-              widget.chatName,
-              style: AppTextStyles.title,
-            ),
+            child: Text(widget.chatName, style: AppTextStyles.title),
           ),
           centerTitle: true,
         ),
@@ -265,8 +265,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _deleteMessage(Message message) async {
     ScaffoldMessenger.of(context).showSnackBar(
       MySnackBar(
-        text: 'Это не реализовано', backgroundColor: AppColors.warning,
-      )
+        text: 'Это не реализовано',
+        backgroundColor: AppColors.warning,
+      ),
     );
   }
 

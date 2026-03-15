@@ -128,11 +128,8 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     Navigator.pop(context);
 
     try {
-      final (conversationId, alreadyExists, otherUsername) = await getOrCreateDialog(
-        _user!,
-        otherUserId,
-        widget.token,
-      );
+      final (conversationId, alreadyExists, otherUsername) =
+          await getOrCreateDialog(_user!, otherUserId, widget.token);
 
       if (!mounted) return;
 
@@ -169,10 +166,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(
-          text: 'Ошибка: $e',
-          backgroundColor: AppColors.error,
-        ),
+        MySnackBar(text: 'Ошибка: $e', backgroundColor: AppColors.error),
       );
     }
   }
@@ -184,16 +178,17 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => ProfileScreen(token: widget.token),
-          ),
+          MaterialPageRoute(builder: (_) => ProfileScreen(token: widget.token)),
         );
       },
       child: MyContainer(
         padding: const EdgeInsets.all(AppDimensions.paddingM),
         borderRadius: 16,
         opacity: 0.06,
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.3),
+          width: 1,
+        ),
         child: Row(
           children: [
             ImageLoader().loadImage(
@@ -236,6 +231,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       ),
     );
   }
+
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

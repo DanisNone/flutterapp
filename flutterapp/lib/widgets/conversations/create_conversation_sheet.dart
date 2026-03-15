@@ -36,9 +36,7 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
           children: [
             Text(
               'Новая переписка',
-              style: AppTextStyles.headline3.copyWith(
-                color: AppColors.glow,
-              ),
+              style: AppTextStyles.headline3.copyWith(color: AppColors.glow),
             ),
             const SizedBox(height: AppDimensions.paddingL),
             TextFormField(

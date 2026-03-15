@@ -71,10 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      MySnackBar(
-        text: 'Профиль обновлен',
-        backgroundColor: AppColors.success,
-      ),
+      MySnackBar(text: 'Профиль обновлен', backgroundColor: AppColors.success),
     );
   }
 
@@ -94,11 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ImageLoader().loadImage(
       avatarUrl,
       120,
-      const Icon(
-        Icons.person,
-        size: 60,
-        color: Colors.white,
-      )
+      const Icon(Icons.person, size: 60, color: Colors.white),
     );
   }
 
@@ -169,11 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                child: Icon(icon, color: Colors.white, size: 18),
               ),
               const SizedBox(width: AppDimensions.paddingM),
               Text(
@@ -207,7 +196,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value.isEmpty ? 'Не указано' : value,
               style: AppTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.w500,
-                color: value.isEmpty ? AppColors.textMuted : AppColors.textPrimary,
+                color: value.isEmpty
+                    ? AppColors.textMuted
+                    : AppColors.textPrimary,
               ),
             ),
         ],
@@ -259,9 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (_user == null) {
-      return const Center(
-        child: Text('Пользователь не найден'),
-      );
+      return const Center(child: Text('Пользователь не найден'));
     }
 
     return SingleChildScrollView(
@@ -289,13 +278,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // Info Cards — всегда вертикальный список (без сетки)
           Column(
-            children: _buildInfoCards()
-                .expand((widget) => [
-                      widget,
-                      const SizedBox(height: AppDimensions.paddingM)
-                    ])
-                .toList()
-              ..removeLast(),
+            children:
+                _buildInfoCards()
+                    .expand(
+                      (widget) => [
+                        widget,
+                        const SizedBox(height: AppDimensions.paddingM),
+                      ],
+                    )
+                    .toList()
+                  ..removeLast(),
           ),
         ],
       ),
@@ -329,10 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         icon: Icon(icon),
         label: Text(
           text,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
     );
@@ -356,7 +345,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: Colors.transparent,
           foregroundColor: AppColors.textPrimary,
           actions: [
-
             if (!_isLoading && _user != null)
               if (_isEditing) ...[
                 IconButton(
@@ -394,9 +382,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onRefresh: _loadUserProfile,
           color: AppColors.primary,
           backgroundColor: AppColors.surfaceDark,
-          child: ResponsiveContainer(
-            child: _buildContent(),
-          ),
+          child: ResponsiveContainer(child: _buildContent()),
         ),
       ),
     );

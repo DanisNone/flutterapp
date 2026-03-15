@@ -73,12 +73,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      MySnackBar(
-        text: message,
-        backgroundColor: AppColors.error,
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(MySnackBar(text: message, backgroundColor: AppColors.error));
   }
 
   @override

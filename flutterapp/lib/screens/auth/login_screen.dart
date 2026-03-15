@@ -78,10 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(
-          text: 'Ошибка входа: $e',
-          backgroundColor: AppColors.error,
-        ),
+        MySnackBar(text: 'Ошибка входа: $e', backgroundColor: AppColors.error),
       );
     } finally {
       if (mounted) {

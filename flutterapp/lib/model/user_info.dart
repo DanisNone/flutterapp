@@ -5,11 +5,7 @@ class UserInfo {
   final String username;
   final String? avatarUrl;
 
-  UserInfo({
-    required this.id,
-    required this.username,
-    this.avatarUrl,
-  });
+  UserInfo({required this.id, required this.username, this.avatarUrl});
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {
     return UserInfo(
@@ -25,11 +21,7 @@ class UserInfo {
 
   // Метод для конвертации в JSON
   Map<String, dynamic> toJson() {
-    return {
-      'user_id': id,
-      'username': username,
-      'avatar_url': avatarUrl,
-    };
+    return {'user_id': id, 'username': username, 'avatar_url': avatarUrl};
   }
 
   UserInfo copyWith({

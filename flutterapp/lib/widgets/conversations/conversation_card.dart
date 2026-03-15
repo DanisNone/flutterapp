@@ -23,7 +23,7 @@ class ConversationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     String name = info.getName(currentUserId);
     String? avatarUrl = info.getAvatarUrl(currentUserId);
-    
+
     return MyContainer(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
       borderRadius: AppDimensions.radiusL,
@@ -32,7 +32,10 @@ class ConversationCard extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.all(AppDimensions.paddingM),
         leading: ImageLoader().loadImage(
-          avatarUrl, 48, Center(child: Text(
+          avatarUrl,
+          48,
+          Center(
+            child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '#',
               style: const TextStyle(
                 color: Colors.white,
@@ -40,7 +43,8 @@ class ConversationCard extends StatelessWidget {
                 fontSize: 18,
               ),
             ),
-          ),),
+          ),
+        ),
         title: Text(
           name,
           style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w600),

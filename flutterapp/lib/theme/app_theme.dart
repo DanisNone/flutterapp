@@ -204,7 +204,7 @@ class MyContainer extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(borderRadius),
         border: border ?? Border.all(color: AppColors.border, width: 1),
-        ),
+      ),
       child: child,
     );
   }

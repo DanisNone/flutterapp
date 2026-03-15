@@ -119,7 +119,7 @@ class User {
       bio,
       avatarUrl,
       role,
-      createdAt
+      createdAt,
     );
   }
 }
