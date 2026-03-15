@@ -112,7 +112,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (context) => MyContainer(
         borderRadius: 24,
         opacity: 0.08,
