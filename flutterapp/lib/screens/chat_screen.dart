@@ -51,7 +51,10 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     widget.manager.setToken(widget.token);
 
-    _listener = ChatListener(newMessage: _handleIncomingMessage);
+    _listener = ChatListener(
+      newMessage: _handleIncomingMessage,
+      loadMessages: _handleLoadMessage
+    );
     _scrollController.addListener(_onScroll);
 
     widget.manager.addListener(_listener);
@@ -81,7 +84,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
   }
 
-  void _handleIncomingMessage(Message message, bool isNew) {
+  void _handleIncomingMessage(Message message) {
     // если список ещё пуст/не инициализирован — не пытаемся читать .first
     if (_messages != null &&
         _messages!.isNotEmpty &&
@@ -95,11 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
           _messages ??= []; // инициализируем при первом заходе
 
           if (message.senderId != _user?.id) {
-            if (isNew) {
-              _messages!.add(message);
-            } else {
-              _messages!.insert(0, message);
-            }
+            _messages!.add(message);
           } else {
             bool find = false;
             for (var userMessage in _messages!) {
@@ -111,11 +110,7 @@ class _ChatScreenState extends State<ChatScreen> {
               }
             }
             if (!find) {
-              if (isNew) {
-                _messages!.add(message);
-              } else {
-                _messages!.insert(0, message);
-              }
+              _messages!.add(message);
             }
           }
         });
@@ -125,6 +120,16 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _handleLoadMessage(List<Message> messages) {
+    setState(() {
+      _messages ??= [];
+      for (var message in messages.reversed) {
+        if (_messages!.first.id != message.id) {
+          _messages!.insert(0, message);
+        }
+      }
+    });
+  }
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;

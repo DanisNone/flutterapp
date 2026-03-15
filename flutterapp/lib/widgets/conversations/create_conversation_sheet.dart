@@ -5,7 +5,7 @@ import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 
 class CreateConversationSheet extends StatefulWidget {
-  final Function(int userId) onCreate;
+  final Function(String username) onCreate;
 
   const CreateConversationSheet({super.key, required this.onCreate});
 
@@ -41,10 +41,10 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
             const SizedBox(height: AppDimensions.paddingL),
             TextFormField(
               controller: _controller,
-              keyboardType: TextInputType.number,
+              keyboardType: TextInputType.text,
               style: AppTextStyles.bodyLarge,
               decoration: InputDecoration(
-                labelText: 'ID собеседника',
+                labelText: 'Username собеседника',
                 labelStyle: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -69,10 +69,10 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Введите ID пользователя';
+                  return 'Введите username пользователя';
                 }
-                if (int.tryParse(value) == null) {
-                  return 'Введите корректный числовой ID';
+                if (value.contains(' ')) {
+                  return 'Username не должен содержать пробелов';
                 }
                 return null;
               },
@@ -120,8 +120,8 @@ class _CreateConversationSheetState extends State<CreateConversationSheet> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      final id = int.parse(_controller.text);
-      widget.onCreate(id);
+      final username = _controller.text.trim();
+      widget.onCreate(username);
     }
   }
 

@@ -5,14 +5,14 @@ import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/routes/all_routes.dart';
 import 'package:http/http.dart' as http;
 
-Future<(int, bool, String)> getOrCreateDialog(
+Future<(int, bool)> getOrCreateDialog(
   User user,
-  int otherUserId,
+  String otherUsername,
   JWTToken token,
 ) async {
   await token.updateToken();
   final response = await http.get(
-    Uri.parse('$getOrCreateDialogUrl/$otherUserId'),
+    Uri.parse("$getOrCreateDialogUrl/${Uri.encodeComponent(otherUsername)}"),
     headers: {"Authorization": token.toHeaderValue()},
   );
   final Map<String, dynamic> data = json.decode(response.body);
@@ -20,7 +20,6 @@ Future<(int, bool, String)> getOrCreateDialog(
     return (
       data["id"] as int,
       data["already_exists"] as bool,
-      data["other_username"] as String,
     );
   }
   throw Exception(

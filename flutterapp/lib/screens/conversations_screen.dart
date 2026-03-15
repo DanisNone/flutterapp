@@ -56,8 +56,8 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     _loadConversations();
   }
 
-  void _lastMessageUpdate(Message message, bool isNew) {
-    if (!isNew || _conversations == null) return;
+  void _lastMessageUpdate(Message message) {
+    if (_conversations == null) return;
 
     for (int i = 0; i < _conversations!.length; i++) {
       if (_conversations![i].id != message.conversationId) {
@@ -121,14 +121,14 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     );
   }
 
-  Future<void> _createConversation(int otherUserId) async {
+  Future<void> _createConversation(String otherUsername) async {
     if (_user == null) return;
 
     Navigator.pop(context);
 
     try {
-      final (conversationId, alreadyExists, otherUsername) =
-          await getOrCreateDialog(_user!, otherUserId, widget.token);
+      final (conversationId, alreadyExists) =
+          await getOrCreateDialog(_user!, otherUsername, widget.token);
 
       if (!mounted) return;
 

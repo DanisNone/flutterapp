@@ -11,13 +11,15 @@ import 'package:flutterapp/routes/all_routes.dart';
 
 class ChatListener {
   final void Function(bool)? connection;
-  final void Function(Message, bool)? newMessage;
+  final void Function(Message)? newMessage;
+  final void Function(List<Message>)? loadMessages;
   final void Function(List<ConversationInfo>)? conversations;
   final void Function(dynamic)? error;
 
   ChatListener({
     this.connection,
     this.newMessage,
+    this.loadMessages,
     this.error,
     this.conversations,
   });
@@ -128,7 +130,7 @@ class ChatManager {
 
     for (var listener in _listeners) {
       try {
-        listener.newMessage?.call(message, true);
+        listener.newMessage?.call(message);
       } catch (_) {}
     }
   }
@@ -161,13 +163,11 @@ class ChatManager {
         _addMessage(data);
       } else if (decoded["type"] == "messages") {
         final data = List<Map<String, dynamic>>.from(decoded["data"] as List);
-        final messages = data.map(Message.fromJson);
-        for (var message in messages) {
-          for (var listener in _listeners) {
-            try {
-              listener.newMessage?.call(message, false);
-            } catch (_) {}
-          }
+        final messages = data.map(Message.fromJson).toList();
+        for (var listener in _listeners) {
+          try {
+            listener.loadMessages?.call(messages);
+          } catch (_) {}
         }
       } else {
         throw Exception("unknown websocket answer type: ${decoded["type"]}");
