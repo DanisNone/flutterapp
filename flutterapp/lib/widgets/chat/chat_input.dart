@@ -16,7 +16,7 @@ class ChatInput extends StatefulWidget {
 }
 
 class _ChatInputState extends State<ChatInput> {
-  static const int _maxLength = 500;
+  static const int _maxLength = 5000;
   late final FocusNode _focusNode;
 
   @override
