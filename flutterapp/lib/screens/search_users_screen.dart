@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user.dart';
+import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
-import 'package:flutterapp/service/user.dart' as user_service;
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
 import 'package:flutterapp/constants/app_colors.dart';
@@ -32,13 +32,42 @@ class SearchUsersScreen extends StatefulWidget {
 
 class _SearchUsersScreenState extends State<SearchUsersScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<User> _searchResults = [];
+  List<UserInfo> _searchResults = [];
   bool _isSearching = false;
+  String? _lastQuery;
   String? _errorMessage;
+  ChatListener? _listener;
+
+  @override
+  void initState() {
+    super.initState();
+    _listener = ChatListener(
+      onSearchResult: (query, users) {
+        if (!mounted) return;
+
+        // Игнорируем ответы для устаревших запросов
+        if (query == _lastQuery) {
+          setState(() {
+            _searchResults = users;
+            _isSearching = false;
+          });
+        }
+      },
+      error: (error) {
+        if (!mounted) return;
+        setState(() {
+          _errorMessage = 'Ошибка WebSocket: $error';
+          _isSearching = false;
+        });
+      },
+    );
+    widget.manager.addListener(_listener!);
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    widget.manager.removeListener(_listener!);
     super.dispose();
   }
 
@@ -47,6 +76,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
       setState(() {
         _searchResults = [];
         _isSearching = false;
+        _lastQuery = null;
       });
       return;
     }
@@ -54,25 +84,12 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
     setState(() {
       _isSearching = true;
       _errorMessage = null;
+      _lastQuery = query;
     });
-
-    try {
-      final results = await user_service.searchUsers(widget.token, query);
-      if (!mounted) return;
-      setState(() {
-        _searchResults = results;
-        _isSearching = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Ошибка поиска: $e';
-        _isSearching = false;
-      });
-    }
+    widget.manager.searchUsers(query);
   }
 
-  Future<void> _createConversationWithUser(User otherUser) async {
+  Future<void> _createConversationWithUser(UserInfo otherUser) async {
     if (otherUser.id == widget.currentUser.id) {
       ScaffoldMessenger.of(context).showSnackBar(
         MySnackBar(
@@ -125,7 +142,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
     }
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return GradientBackground(
       child: Scaffold(
@@ -194,7 +211,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
                           const Icon(Icons.person),
                         ),
                         title: Text(user.username),
-                        subtitle: Text(user.fullName),
+                        subtitle: Text(user.fullName ?? ''),
                         onTap: () => _createConversationWithUser(user),
                       );
                     },

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutterapp/model/conversation_info.dart';
+import 'package:flutterapp/model/user_info.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:flutterapp/model/jwttoken.dart';
@@ -13,14 +14,16 @@ class ChatListener {
   final void Function(Message)? newMessage;
   final void Function(List<Message>)? loadMessages;
   final void Function(List<ConversationInfo>)? conversations;
+  final void Function(String query, List<UserInfo> users)? onSearchResult;
   final void Function(dynamic)? error;
 
   ChatListener({
     this.connection,
     this.newMessage,
     this.loadMessages,
-    this.error,
     this.conversations,
+    this.onSearchResult,
+    this.error,
   });
 }
 
@@ -168,6 +171,19 @@ class ChatManager {
             listener.loadMessages?.call(messages);
           } catch (_) {}
         }
+      } else if (decoded["type"] == "find_user_result") {
+        final data = decoded["data"] as Map<String, dynamic>;
+        final query = data["search_string"] as String;
+        final usersJson = data["users"] as List;
+        final users = usersJson
+            .map((u) => UserInfo.fromJson(u as Map<String, dynamic>))
+            .toList();
+
+        for (var listener in _listeners) {
+          try {
+            listener.onSearchResult?.call(query, users);
+          } catch (_) {}
+        }
       } else {
         throw Exception("unknown websocket answer type: ${decoded["type"]}");
       }
@@ -297,5 +313,14 @@ class ChatManager {
     _closeChannel();
     _listeners.clear();
     _isReconnecting = false;
+  }
+
+  void searchUsers(String query) {
+    _connect(); // гарантируем соединение
+    final payload = {
+      "type": "search_user",
+      "data": {"search_string": query},
+    };
+    _channel?.sink.add(jsonEncode(payload));
   }
 }
