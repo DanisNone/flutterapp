@@ -107,72 +107,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     await _loadConversations();
   }
 
-  void _openCreateConversationSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surfaceDark,
-      builder: (context) => MyContainer(
-        borderRadius: 24,
-        opacity: 0.08,
-        border: Border.all(color: AppColors.borderGlow, width: 1.5),
-        child: CreateConversationSheet(onCreate: _createConversation),
-      ),
-    );
-  }
-
-  Future<void> _createConversation(String otherUsername) async {
-    if (_user == null) return;
-
-    Navigator.pop(context);
-
-    try {
-      final (conversationId, alreadyExists) = await getOrCreateDialog(
-        _user!,
-        otherUsername,
-        widget.token,
-      );
-
-      if (!mounted) return;
-
-      final message = alreadyExists
-          ? 'Переписка уже существует'
-          : 'Переписка создана';
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(
-          text: '$message (ID: $conversationId)',
-          backgroundColor: alreadyExists
-              ? AppColors.warning
-              : AppColors.success,
-        ),
-      );
-
-      await _refresh();
-
-      if (!mounted) return;
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(
-            conversationId: conversationId,
-            userId: _user!.id,
-            chatName: otherUsername,
-            token: widget.token,
-            manager: manager,
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(text: 'Ошибка: $e', backgroundColor: AppColors.error),
-      );
-    }
-  }
-
   Widget _buildUserInfo() {
     if (_user == null) return const SizedBox();
 
@@ -280,7 +214,16 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         message: 'У вас пока нет переписок',
         icon: Icons.chat_bubble_outline,
         buttonText: 'Создать первую',
-        onButtonPressed: _openCreateConversationSheet,
+        onButtonPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SearchUsersScreen(
+                  token: widget.token,
+                  manager: manager,
+                  currentUser: _user!,
+                ),
+              ),
+            ),
       );
     }
 
