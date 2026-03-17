@@ -44,6 +44,10 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  // Состояние выделения
+  final Set<Message> _selectedMessages = {};
+  bool _isSelectionMode = false;
+
   @override
   void initState() {
     super.initState();
@@ -77,13 +81,11 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _user = user;
       _isLoading = false;
-      // _messages остаётся null до прихода данных через listener
     });
     _scrollToBottom();
   }
 
   void _handleIncomingMessage(Message message) {
-    // если список ещё пуст/не инициализирован — не пытаемся читать .first
     if (_messages != null &&
         _messages!.isNotEmpty &&
         _messages!.first.id == message.id) {
@@ -94,7 +96,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (message.conversationId == widget.conversationId) {
         setState(() {
-          _messages ??= []; // инициализируем при первом заходе
+          _messages ??= [];
 
           if (message.senderId != _user?.id) {
             _messages!.add(message);
@@ -143,7 +145,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     setState(() {
-      _messages ??= []; // гарантируем, что список инициализирован
+      _messages ??= [];
       _messages!.add(
         Message(
           id: null,
@@ -157,7 +159,6 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     widget.manager.sendMessage(widget.conversationId, text);
-
     _controller.clear();
   }
 
@@ -171,7 +172,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _onScroll() {
-    // только если список инициализирован и в нём есть сообщения
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 50) {
       if (_messages != null && _messages!.isNotEmpty) {
@@ -179,6 +179,51 @@ class _ChatScreenState extends State<ChatScreen> {
         widget.manager.loadBefore(oldestMessage);
       }
     }
+  }
+
+  void _toggleSelection(Message message, {bool isTap = false}) {
+    if (isTap && !_isSelectionMode) {
+      return;
+    }
+    if (!_isSelectionMode) {
+      _isSelectionMode = true;
+      _selectedMessages.clear();
+      _selectedMessages.add(message);
+    } else {
+      if (_selectedMessages.contains(message)) {
+        _selectedMessages.remove(message);
+      } else {
+        _selectedMessages.add(message);
+      }
+      if (_selectedMessages.isEmpty) {
+        _isSelectionMode = false;
+      }
+    }
+    setState(() {});
+  }
+
+  void _clearSelection() {
+    _isSelectionMode = false;
+    _selectedMessages.clear();
+    setState(() {});
+  }
+
+  void _copySelectedMessages() {
+    if (_selectedMessages.isEmpty) return;
+    final text = _selectedMessages.map((m) => m.text).join('\n\n');
+    Clipboard.setData(ClipboardData(text: text));
+    _clearSelection();
+  }
+
+  void _deleteSelectedMessages() {
+    if (_selectedMessages.isEmpty) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      MySnackBar(
+        text: 'Это не реализовано',
+        backgroundColor: AppColors.warning,
+      ),
+    );
   }
 
   @override
@@ -193,91 +238,71 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return GradientBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          elevation: 0,
+      child: PopScope(
+        canPop: !_isSelectionMode,
+        onPopInvokedWithResult: (bool didPop, dynamic) {
+          if (!didPop && _isSelectionMode) {
+            _clearSelection();
+          }
+        },
+        child: Scaffold(
           backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.textPrimary,
-          title: MyContainer(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            borderRadius: 12,
-            opacity: 0.04,
-            child: Text(widget.chatName, style: AppTextStyles.title),
+          appBar: _isSelectionMode ? _buildSelectionAppBar() : _buildNormalAppBar(),
+          body: Column(
+            children: [
+              Expanded(child: _buildBody()),
+              ChatInput(controller: _controller, onSend: _sendMessage),
+            ],
           ),
-          centerTitle: true,
-        ),
-        body: Column(
-          children: [
-            Expanded(child: _buildBody()),
-            ChatInput(controller: _controller, onSend: _sendMessage),
-          ],
         ),
       ),
     );
   }
 
-  void _showMessageOptions(BuildContext context, Message message) {
-    showModalBottomSheet(
-      context: context,
+  AppBar _buildNormalAppBar() {
+    return AppBar(
+      elevation: 0,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return MyContainer(
-          borderRadius: 24,
-          opacity: 0.08,
-          border: Border.all(color: AppColors.borderGlow, width: 1.5),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(
-                    Icons.copy,
-                    color: AppColors.textSecondary,
-                  ),
-                  title: Text('Копировать', style: AppTextStyles.bodyLarge),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _copyMessage(message);
-                  },
-                ),
-                if (message.senderId == _user?.id)
-                  ListTile(
-                    leading: const Icon(Icons.delete, color: AppColors.error),
-                    title: Text(
-                      'Удалить',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.error,
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _deleteMessage(message);
-                    },
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
+      foregroundColor: AppColors.textPrimary,
+      title: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceSolid,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(widget.chatName, style: AppTextStyles.title),
+      ),
+      centerTitle: true,
     );
   }
 
-  void _copyMessage(Message message) {
-    Clipboard.setData(ClipboardData(text: message.text));
-  }
-
-  Future<void> _deleteMessage(Message message) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      MySnackBar(
-        text: 'Это не реализовано',
-        backgroundColor: AppColors.warning,
+  AppBar _buildSelectionAppBar() {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: AppColors.toolbarBackground,
+      foregroundColor: AppColors.textPrimary,
+      leading: IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: _clearSelection,
       ),
+      title: Text(
+        '${_selectedMessages.length} выбрано',
+        style: AppTextStyles.title,
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.copy),
+          onPressed: _copySelectedMessages,
+        ),
+        if (_selectedMessages.every((message) => message.senderId == _user!.id)) IconButton(
+          icon: const Icon(Icons.delete),
+          onPressed: _deleteSelectedMessages,
+        ),
+      ],
     );
   }
 
   Widget _buildBody() {
-    // показываем индикатор, если ещё идёт загрузка или список сообщений ещё не инициализирован
     if (_isLoading || _messages == null) {
       return const LoadingIndicator(message: 'Загрузка сообщений...');
     }
@@ -319,17 +344,19 @@ class _ChatScreenState extends State<ChatScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
-                  child: MyContainer(
+                  child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 6,
                     ),
-                    borderRadius: 20,
-                    opacity: 0.04,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceSolid,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     child: Text(
                       _formatDate(message.createdAt),
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondarySolid,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -338,14 +365,29 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             );
           }
+
           children.add(
             GestureDetector(
-              onLongPress: () => _showMessageOptions(context, message),
-              child: MessageBubble(
-                isSended: message.id != null,
-                text: message.text,
-                isMine: isMine,
-                timestamp: message.createdAt,
+              onLongPress: () => _toggleSelection(message), // телефон
+              onTap: () => _toggleSelection(message, isTap: true), // выбор нескольких
+              onSecondaryTap: () => _toggleSelection(message), // для ПК
+              child: Container(
+                decoration: _selectedMessages.contains(message)
+                    ? BoxDecoration(
+                        color: AppColors.messageSelected,
+                        border: Border.all(
+                          color: AppColors.messageSelectedBorder,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      )
+                    : null,
+                child: MessageBubble(
+                  isSended: message.id != null,
+                  text: message.text,
+                  isMine: isMine,
+                  timestamp: message.createdAt,
+                ),
               ),
             ),
           );
