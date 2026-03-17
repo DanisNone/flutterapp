@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutterapp/firebase_options.dart';
 
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
@@ -17,7 +18,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 2. Инициализация Firebase
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform
+  );
 
   // 3. Фоновый обработчик
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
