@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/routes/all_routes.dart';
@@ -17,21 +15,14 @@ class ChatListener {
   final void Function(String query, List<UserInfo> users)? onSearchResult;
   final void Function(dynamic)? error;
 
-  ChatListener({
-    this.connection,
-    this.newMessage,
-    this.loadMessages,
-    this.conversations,
-    this.onSearchResult,
-    this.error,
-  });
+  ChatListener({this.connection, this.newMessage, this.loadMessages, this.conversations, this.onSearchResult, this.error});
 }
 
 class ChatManager {
   WebSocketChannel? _channel;
   bool _isConnected = false;
   final List<ChatListener> _listeners = [];
-  final List<(int, String)> _messagesQueue = [];
+  final List<({int conversationId, String text})> _messagesQueue = [];
   JWTToken? _token;
 
   Timer? _reconnectTimer;
@@ -41,7 +32,6 @@ class ChatManager {
 
   bool get isConnected => _isConnected;
 
-  /// Устанавливает токен и пытается подключиться
   void setToken(JWTToken token) {
     if (_token == token && _isConnected) return;
     _token = token;
@@ -49,143 +39,79 @@ class ChatManager {
   }
 
   Future<void> _connect() async {
-    if (_token == null) return;
-    if (_channel != null) return;
+    if (_token == null || _channel != null) return;
 
     try {
       await _token!.updateToken();
       _cancelReconnectTimer();
-      final uri = Uri.parse(
-        webSocketUrl,
-      ).replace(queryParameters: {"token": _token!.accessToken});
+      final uri = Uri.parse(webSocketUrl).replace(queryParameters: {"token": _token!.accessToken});
 
-      _isConnected = true;
       _channel = WebSocketChannel.connect(uri);
       await _channel!.ready;
-      _channelSubscription = _channel!.stream.listen(
-        _onData,
-        onError: _onError,
-        onDone: _onDone,
-        cancelOnError: true,
-      );
-
-      _setConnection(_isConnected);
+      
+      _isConnected = true;
+      _channelSubscription = _channel!.stream.listen(_onData, onError: _onError, onDone: _onDone, cancelOnError: true);
+      _setConnection(true);
       _isReconnecting = false;
     } catch (e) {
-      _setConnection(false);
       _onError(e);
     }
   }
 
   void _setConnection(bool value) {
-    if (value) _sendMessage();
     _isConnected = value;
+    if (value) _flushMessageQueue();
     for (var listener in _listeners) {
-      try {
-        listener.connection?.call(value);
-      } catch (_) {
-        // Игнорируем исключения слушателей
-      }
+      listener.connection?.call(value);
     }
   }
 
   void loadConversations() {
     _connect();
-    _channel!.sink.add(jsonEncode({"type": "get_conversations"}));
+    _channel?.sink.add(jsonEncode({"type": "get_conversations"}));
   }
 
-  void loadLast(int conversationId) async {
+  void loadLast(int conversationId) {
     _connect();
-
-    final payload = {
+    _channel?.sink.add(jsonEncode({
       "type": "get_messages",
-      "data": {
-        "conversation_id": conversationId,
-        "last_message_date": DateTime.now().toUtc().toString(),
-      },
-    };
-    _channel!.sink.add(jsonEncode(payload));
+      "data": {"conversation_id": conversationId, "last_message_date": DateTime.now().toUtc().toIso8601String()},
+    }));
   }
 
-  void loadBefore(Message message) async {
+  void loadBefore(Message message) {
     _connect();
-
-    final payload = {
+    _channel?.sink.add(jsonEncode({
       "type": "get_messages",
-      "data": {
-        "conversation_id": message.conversationId,
-        "last_message_date": message.createdAt.toString(),
-      },
-    };
-    _channel!.sink.add(jsonEncode(payload));
-  }
-
-  void _addMessage(Map<String, dynamic> data) {
-    final conversation = data["conversation"] as Map<String, dynamic>?;
-    final messageMap = Map<String, dynamic>.from(data["message"] as Map);
-
-    if (conversation != null && conversation.containsKey("id")) {
-      messageMap["conversation_id"] = conversation["id"];
-    }
-
-    final message = Message.fromJson(messageMap);
-
-    for (var listener in _listeners) {
-      try {
-        listener.newMessage?.call(message);
-      } catch (_) {}
-    }
+      "data": {"conversation_id": message.conversationId, "last_message_date": message.createdAt.toIso8601String()},
+    }));
   }
 
   void _onData(dynamic response) {
+    if (response == null) return;
     try {
-      if (response == null) return;
-
-      Map<String, dynamic> decoded;
-      if (response is String) {
-        decoded = jsonDecode(response);
-      } else if (response is Map) {
-        decoded = Map<String, dynamic>.from(response);
-      } else {
-        return;
-      }
-      if (decoded["type"] == "conversations") {
-        List<ConversationInfo> convs = (decoded["data"] as List)
-            .map((o) => ConversationInfo.fromJson(o as Map<String, dynamic>))
-            .toList();
-        for (var listener in _listeners) {
-          try {
-            listener.conversations?.call(convs);
-          } catch (e) {
-            // игнорим ошибки в callback
-          }
-        }
-      } else if (decoded["type"] == "new_message") {
-        final data = Map<String, dynamic>.from(decoded["data"] as Map);
-        _addMessage(data);
-      } else if (decoded["type"] == "messages") {
-        final data = List<Map<String, dynamic>>.from(decoded["data"] as List);
-        final messages = data.map(Message.fromJson).toList();
-        for (var listener in _listeners) {
-          try {
-            listener.loadMessages?.call(messages);
-          } catch (_) {}
-        }
-      } else if (decoded["type"] == "find_user_result") {
-        final data = decoded["data"] as Map<String, dynamic>;
-        final query = data["search_string"] as String;
-        final usersJson = data["users"] as List;
-        final users = usersJson
-            .map((u) => UserInfo.fromJson(u as Map<String, dynamic>))
-            .toList();
-
-        for (var listener in _listeners) {
-          try {
-            listener.onSearchResult?.call(query, users);
-          } catch (_) {}
-        }
-      } else {
-        throw Exception("unknown websocket answer type: ${decoded["type"]}");
+      final decoded = response is String ? jsonDecode(response) : Map<String, dynamic>.from(response);
+      
+      switch (decoded["type"]) {
+        case "conversations":
+          final convs = (decoded["data"] as List).map((o) => ConversationInfo.fromJson(o)).toList();
+          for (var l in _listeners) l.conversations?.call(convs);
+          break;
+        case "new_message":
+          final data = Map<String, dynamic>.from(decoded["data"]);
+          final msgMap = Map<String, dynamic>.from(data["message"]);
+          if (data["conversation"]?["id"] != null) msgMap["conversation_id"] = data["conversation"]["id"];
+          final msg = Message.fromJson(msgMap);
+          for (var l in _listeners) l.newMessage?.call(msg);
+          break;
+        case "messages":
+          final messages = (decoded["data"] as List).map((m) => Message.fromJson(m)).toList();
+          for (var l in _listeners) l.loadMessages?.call(messages);
+          break;
+        case "find_user_result":
+          final users = (decoded["data"]["users"] as List).map((u) => UserInfo.fromJson(u)).toList();
+          for (var l in _listeners) l.onSearchResult?.call(decoded["data"]["search_string"], users);
+          break;
       }
     } catch (e) {
       _onError(e);
@@ -194,13 +120,9 @@ class ChatManager {
 
   void _onError(dynamic error) {
     _setConnection(false);
-
-    for (var listener in _listeners) {
-      try {
-        listener.error?.call(error);
-      } catch (_) {}
+    for (var l in _listeners) {
+      l.error?.call(error);
     }
-
     _closeChannel();
     _scheduleReconnect();
   }
@@ -214,16 +136,10 @@ class ChatManager {
   void _scheduleReconnect() {
     if (_isReconnecting) return;
     _isReconnecting = true;
-
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(_reconnectDelay, () async {
       _isReconnecting = false;
-      if (!_isConnected && _token != null) {
-        await _connect();
-        if (!_isConnected) {
-          _scheduleReconnect();
-        }
-      }
+      if (!_isConnected && _token != null) await _connect();
     });
   }
 
@@ -233,94 +149,43 @@ class ChatManager {
     _isReconnecting = false;
   }
 
-  Future<bool> reconnect() async {
-    _cancelReconnectTimer();
-    _isReconnecting = false;
-
-    // Закроем текущее, если есть
-    _closeChannel();
-
-    if (_token != null) {
-      await _connect();
-    }
-
-    return _isConnected;
-  }
-
-  void _sendMessage() {
-    while (_messagesQueue.isNotEmpty) {
-      try {
-        if (!_isConnected || _channel == null) {
-          break;
-        }
-        final payload = {
-          "type": "send_message",
-          "data": {
-            "conversation_id": _messagesQueue.first.$1,
-            "text": _messagesQueue.first.$2,
-          },
-        };
-        _channel!.sink.add(jsonEncode(payload));
-        _messagesQueue.removeAt(0);
-      } catch (e) {
-        _onError(e);
-        break;
-      }
+  void _flushMessageQueue() {
+    while (_messagesQueue.isNotEmpty && _isConnected && _channel != null) {
+      final msg = _messagesQueue.removeAt(0);
+      _channel!.sink.add(jsonEncode({
+        "type": "send_message",
+        "data": {"conversation_id": msg.conversationId, "text": msg.text},
+      }));
     }
   }
 
   void sendMessage(int conversationId, String text) {
-    _messagesQueue.add((conversationId, text));
-    _sendMessage();
+    _messagesQueue.add((conversationId: conversationId, text: text));
+    _flushMessageQueue();
   }
 
-  Future<void> deleteMessage(int messageId) async {
-    if (!_isConnected || _channel == null) {
-      throw Exception('Нет соединения с сервером');
-    }
-    throw Exception("not implemented");
-  }
-
-  void _closeChannel() {
-    try {
-      _channelSubscription?.cancel();
-    } catch (_) {}
-    _channelSubscription = null;
-
-    if (_channel != null) {
-      try {
-        _channel!.sink.close();
-      } catch (_) {}
-      _channel = null;
-    }
-
-    _setConnection(false);
+  void searchUsers(String query) {
+    _connect();
+    _channel?.sink.add(jsonEncode({"type": "search_user", "data": {"search_string": query}}));
   }
 
   void addListener(ChatListener listener) {
     _listeners.add(listener);
-    try {
-      listener.connection?.call(_isConnected);
-    } catch (_) {}
+    listener.connection?.call(_isConnected);
   }
 
-  void removeListener(ChatListener listener) {
-    _listeners.remove(listener);
+  void removeListener(ChatListener listener) => _listeners.remove(listener);
+
+  void _closeChannel() {
+    _channelSubscription?.cancel();
+    _channelSubscription = null;
+    _channel?.sink.close();
+    _channel = null;
   }
 
   void dispose() {
     _cancelReconnectTimer();
     _closeChannel();
     _listeners.clear();
-    _isReconnecting = false;
-  }
-
-  void searchUsers(String query) {
-    _connect(); // гарантируем соединение
-    final payload = {
-      "type": "search_user",
-      "data": {"search_string": query},
-    };
-    _channel?.sink.add(jsonEncode(payload));
   }
 }
