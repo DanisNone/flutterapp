@@ -95,22 +95,22 @@ class ChatManager {
       switch (decoded["type"]) {
         case "conversations":
           final convs = (decoded["data"] as List).map((o) => ConversationInfo.fromJson(o)).toList();
-          for (var l in _listeners) l.conversations?.call(convs);
+          for (var l in _listeners) {l.conversations?.call(convs);}
           break;
         case "new_message":
           final data = Map<String, dynamic>.from(decoded["data"]);
           final msgMap = Map<String, dynamic>.from(data["message"]);
           if (data["conversation"]?["id"] != null) msgMap["conversation_id"] = data["conversation"]["id"];
           final msg = Message.fromJson(msgMap);
-          for (var l in _listeners) l.newMessage?.call(msg);
+          for (var l in _listeners) {l.newMessage?.call(msg);}
           break;
         case "messages":
           final messages = (decoded["data"] as List).map((m) => Message.fromJson(m)).toList();
-          for (var l in _listeners) l.loadMessages?.call(messages);
+          for (var l in _listeners) {l.loadMessages?.call(messages);}
           break;
         case "find_user_result":
           final users = (decoded["data"]["users"] as List).map((u) => UserInfo.fromJson(u)).toList();
-          for (var l in _listeners) l.onSearchResult?.call(decoded["data"]["search_string"], users);
+          for (var l in _listeners) {l.onSearchResult?.call(decoded["data"]["search_string"], users);}
           break;
       }
     } catch (e) {

@@ -294,39 +294,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildActionButton(
-    String text,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-      ),
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingXL,
-            vertical: AppDimensions.paddingM,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          ),
-          elevation: 0,
-        ),
-        icon: Icon(icon),
-        label: Text(
-          text,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-        ),
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _bioController.dispose();

@@ -11,7 +11,7 @@ import 'package:flutterapp/screens/auth/login_screen.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print("Обработка фонового сообщения: ${message.messageId}");
+  debugPrint("Обработка фонового сообщения: ${message.messageId}");
 }
 
 void main() async {
@@ -53,30 +53,30 @@ class _MyAppState extends State<MyApp> {
     );
 
     if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-      print('Нет разрешения на уведомления');
+      debugPrint('Нет разрешения на уведомления');
       return;
     }
 
     // 5. Токен
     String? token = await _messaging.getToken();
-    print('FCM Token: $token');
+    debugPrint('FCM Token: $token');
     // TODO: отправь на сервер
 
     // 6. Foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Foreground: ${message.notification?.title}');
+      debugPrint('Foreground: ${message.notification?.title}');
     });
 
     // 7. Нажатие из фона
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Открыто из уведомления (background)');
+      debugPrint('Открыто из уведомления (background)');
       // TODO: навигация
     });
 
     // 8. Запуск из killed state
     RemoteMessage? initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
-      print('Открыто из уведомления (killed)');
+      debugPrint('Открыто из уведомления (killed)');
       // TODO: навигация
     }
   }
