@@ -165,11 +165,6 @@ class _ConversationsContentState extends State<ConversationsContent> with Automa
         foregroundColor: theme.colorScheme.onSurface, 
         actions: [
           const ThemeToggleButton(),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
-            tooltip: 'Обновить',
-          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

@@ -316,12 +316,7 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
               icon: const Icon(Icons.logout),
               tooltip: 'Выйти',
               onPressed: _logout,
-            ),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Обновить',
-              onPressed: _loadUserProfile,
-            ),
+            )
           ],
         ),
         body: RefreshIndicator(
