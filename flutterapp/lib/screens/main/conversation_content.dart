@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
@@ -23,7 +24,7 @@ class ConversationsContent extends StatefulWidget {
   State<ConversationsContent> createState() => _ConversationsContentState();
 }
 
-class _ConversationsContentState extends State<ConversationsContent> {
+class _ConversationsContentState extends State<ConversationsContent> with AutomaticKeepAliveClientMixin<ConversationsContent> {
   User? _user;
   List<ConversationInfo>? _conversations;
   bool _isLoading = false;
@@ -152,6 +153,7 @@ class _ConversationsContentState extends State<ConversationsContent> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -197,4 +199,7 @@ class _ConversationsContentState extends State<ConversationsContent> {
       ),
     );
   }
+  
+  @override
+  bool get wantKeepAlive => true;
 }

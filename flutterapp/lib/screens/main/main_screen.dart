@@ -14,16 +14,35 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  late final PageController _pageController;
   final List<Widget> _pages = [];
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
     _pages.add(ConversationsContent(token: widget.token));
     _pages.add(ProfileContent(token: widget.token));
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -34,9 +53,10 @@ class _MainScreenState extends State<MainScreen> {
     return GradientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: _pages
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: _pages,
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,

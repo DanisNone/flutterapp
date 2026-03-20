@@ -23,7 +23,7 @@ class ProfileContent extends StatefulWidget {
   State<ProfileContent> createState() => _ProfileContentState();
 }
 
-class _ProfileContentState extends State<ProfileContent> {
+class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAliveClientMixin<ProfileContent> {
   User? _user;
   bool _isLoading = true;
   String? _errorMessage;
@@ -281,6 +281,7 @@ class _ProfileContentState extends State<ProfileContent> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     return GradientBackground(
       child: Scaffold(
@@ -332,4 +333,7 @@ class _ProfileContentState extends State<ProfileContent> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
