@@ -192,7 +192,7 @@ class _ConversationsContentState extends State<ConversationsContent> {
         color: AppColors.primary,
         backgroundColor: theme.colorScheme.surface,
         child: ResponsiveContainer(
-          child: Expanded(child: _buildContent())
+          child: _buildContent()
         ),
       ),
     );
