@@ -9,11 +9,9 @@ import 'package:flutterapp/widgets/common/empty_state.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/chat/message_bubble.dart';
 import 'package:flutterapp/widgets/chat/chat_input.dart';
-import 'package:flutterapp/constants/app_colors.dart';
-import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
+import 'package:flutterapp/constants/app_dimensions.dart';
 
 class ChatScreen extends StatefulWidget {
   final int conversationId;
@@ -21,7 +19,6 @@ class ChatScreen extends StatefulWidget {
   final String chatName;
   final JWTToken token;
   final ChatManager manager;
-
   const ChatScreen({
     super.key,
     required this.conversationId,
@@ -40,11 +37,8 @@ class _ChatScreenState extends State<ChatScreen> {
   List<Message>? _messages;
   bool _isLoading = true;
   late ChatListener _listener;
-
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
-  // Состояние выделения
   final Set<Message> _selectedMessages = {};
   bool _isSelectionMode = false;
 
@@ -52,15 +46,12 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     widget.manager.setToken(widget.token);
-
     _listener = ChatListener(
       newMessage: _handleIncomingMessage,
       loadMessages: _handleLoadMessage,
     );
     _scrollController.addListener(_onScroll);
-
     widget.manager.addListener(_listener);
-
     _init();
   }
 
@@ -75,9 +66,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (!mounted) return;
       }
     }
-
     if (!mounted) return;
-
     setState(() {
       _user = user;
       _isLoading = false;
@@ -93,11 +82,9 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     try {
       if (!mounted) return;
-
       if (message.conversationId == widget.conversationId) {
         setState(() {
           _messages ??= [];
-
           if (message.senderId != _user?.id) {
             _messages!.add(message);
           } else {
@@ -128,7 +115,6 @@ class _ChatScreenState extends State<ChatScreen> {
         _messages!.insert(0, message);
       }
     }
-
     setState(() {});
   }
 
@@ -139,11 +125,10 @@ class _ChatScreenState extends State<ChatScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         MySnackBar(
           text: 'Нет соединения с сервером',
-          backgroundColor: AppColors.warning,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
-
     setState(() {
       _messages ??= [];
       _messages!.add(
@@ -157,7 +142,6 @@ class _ChatScreenState extends State<ChatScreen> {
       );
       _scrollToBottom();
     });
-
     widget.manager.sendMessage(widget.conversationId, text);
     _controller.clear();
   }
@@ -210,18 +194,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _copySelectedMessages() {
     if (_selectedMessages.isEmpty) return;
-    final text = _selectedMessages.map((m) => m.text).join('\n\n');
+    final text = _selectedMessages.map((m) => m.text).join('\n');
     Clipboard.setData(ClipboardData(text: text));
     _clearSelection();
   }
 
   void _deleteSelectedMessages() {
     if (_selectedMessages.isEmpty) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       MySnackBar(
         text: 'Это не реализовано',
-        backgroundColor: AppColors.warning,
+        backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
   }
@@ -237,6 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GradientBackground(
       child: PopScope(
         canPop: !_isSelectionMode,
@@ -247,10 +231,10 @@ class _ChatScreenState extends State<ChatScreen> {
         },
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: _isSelectionMode ? _buildSelectionAppBar() : _buildNormalAppBar(),
+          appBar: _isSelectionMode ? _buildSelectionAppBar(theme) : _buildNormalAppBar(theme),
           body: Column(
             children: [
-              Expanded(child: _buildBody()),
+              Expanded(child: _buildBody(theme)),
               ChatInput(controller: _controller, onSend: _sendMessage),
             ],
           ),
@@ -259,63 +243,61 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  AppBar _buildNormalAppBar() {
+  AppBar _buildNormalAppBar(ThemeData theme) {
     return AppBar(
       elevation: 0,
       backgroundColor: Colors.transparent,
-      foregroundColor: AppColors.textPrimary,
+      foregroundColor: theme.colorScheme.onSurface,
       title: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.surfaceSolid,
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(widget.chatName, style: AppTextStyles.title),
+        child: Text(widget.chatName, style: theme.textTheme.titleMedium),
       ),
       centerTitle: true,
     );
   }
 
-  AppBar _buildSelectionAppBar() {
+  AppBar _buildSelectionAppBar(ThemeData theme) {
     return AppBar(
       elevation: 0,
-      backgroundColor: AppColors.toolbarBackground,
-      foregroundColor: AppColors.textPrimary,
+      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+      foregroundColor: theme.colorScheme.onSurface,
       leading: IconButton(
         icon: const Icon(Icons.close),
         onPressed: _clearSelection,
       ),
       title: Text(
         '${_selectedMessages.length} выбрано',
-        style: AppTextStyles.title,
+        style: theme.textTheme.titleMedium,
       ),
       actions: [
         IconButton(
           icon: const Icon(Icons.copy),
           onPressed: _copySelectedMessages,
         ),
-        if (_selectedMessages.every((message) => message.senderId == _user!.id)) IconButton(
-          icon: const Icon(Icons.delete),
-          onPressed: _deleteSelectedMessages,
-        ),
+        if (_selectedMessages.every((message) => message.senderId == _user!.id))
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: _deleteSelectedMessages,
+          ),
       ],
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(ThemeData theme) {
     if (_isLoading || _messages == null) {
       return const LoadingIndicator(message: 'Загрузка сообщений...');
     }
-
     if (_messages!.isEmpty) {
       return EmptyState(
         message: 'Сообщений пока нет.\nНапишите что-нибудь!',
         icon: Icons.chat_bubble_outline,
       );
     }
-
     final messagesList = _messages!.toList();
-
     return Container(
       color: Colors.transparent,
       child: ListView.builder(
@@ -326,18 +308,15 @@ class _ChatScreenState extends State<ChatScreen> {
         itemBuilder: (context, index) {
           final message = messagesList[messagesList.length - 1 - index];
           final isMine = _user != null && message.senderId == _user!.id;
-
           bool showDateHeader = false;
           if (index == messagesList.length - 1) {
             showDateHeader = true;
           } else {
-            final previousMessage =
-                messagesList[messagesList.length - index - 2];
+            final previousMessage = messagesList[messagesList.length - index - 2];
             if (!_isSameDay(previousMessage.createdAt, message.createdAt)) {
               showDateHeader = true;
             }
           }
-
           List<Widget> children = [];
           if (showDateHeader) {
             children.add(
@@ -345,18 +324,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceSolid,
+                      color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       _formatDate(message.createdAt),
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondarySolid,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -365,18 +341,17 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             );
           }
-
           children.add(
             GestureDetector(
-              onLongPress: () => _toggleSelection(message), // телефон
-              onTap: () => _toggleSelection(message, isTap: true), // выбор нескольких
-              onSecondaryTap: () => _toggleSelection(message), // для ПК
+              onLongPress: () => _toggleSelection(message),
+              onTap: () => _toggleSelection(message, isTap: true),
+              onSecondaryTap: () => _toggleSelection(message),
               child: Container(
                 decoration: _selectedMessages.contains(message)
                     ? BoxDecoration(
-                        color: AppColors.messageSelected,
+                        color: theme.colorScheme.primaryContainer,
                         border: Border.all(
-                          color: AppColors.messageSelectedBorder,
+                          color: theme.colorScheme.primary,
                           width: 2,
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -391,7 +366,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           );
-
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: children,
@@ -410,10 +384,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final messageDate = DateTime(date.year, date.month, date.day);
-
     if (messageDate == today) return 'Сегодня';
     if (messageDate == today.subtract(const Duration(days: 1))) return 'Вчера';
-
     return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 }

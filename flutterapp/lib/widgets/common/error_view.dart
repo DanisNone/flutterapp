@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 
 class ErrorView extends StatelessWidget {
   final String error;
   final VoidCallback? onRetry;
-
   const ErrorView({super.key, required this.error, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppDimensions.paddingL),
@@ -21,25 +19,25 @@ class ErrorView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: theme.colorScheme.errorContainer,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.error.withValues(alpha: 0.3),
+                  color: theme.colorScheme.error.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
               child: Icon(
                 Icons.error_outline,
                 size: 56,
-                color: AppColors.error,
+                color: theme.colorScheme.error,
               ),
             ),
             const SizedBox(height: AppDimensions.paddingL),
-            Text('Произошла ошибка', style: AppTextStyles.headline3),
+            Text('Произошла ошибка', style: theme.textTheme.headlineSmall),
             const SizedBox(height: AppDimensions.paddingS),
             Text(
               error,
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[

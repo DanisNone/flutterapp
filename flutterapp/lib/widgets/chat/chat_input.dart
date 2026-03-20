@@ -1,14 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 
 class ChatInput extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
-
   const ChatInput({super.key, required this.controller, required this.onSend});
 
   @override
@@ -42,29 +39,27 @@ class _ChatInputState extends State<ChatInput> {
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     final platform = defaultTargetPlatform;
-
     if (platform == TargetPlatform.android || platform == TargetPlatform.iOS) {
       return KeyEventResult.ignored;
     }
-
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
       final shiftPressed = HardwareKeyboard.instance.logicalKeysPressed.any(
         (key) =>
             key == LogicalKeyboardKey.shiftLeft ||
             key == LogicalKeyboardKey.shiftRight,
       );
-
       if (!shiftPressed) {
         _handleSubmitted();
         return KeyEventResult.handled;
       }
     }
-
     return KeyEventResult.ignored;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -72,8 +67,8 @@ class _ChatInputState extends State<ChatInput> {
           vertical: AppDimensions.paddingS,
         ),
         decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
-          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+          color: isDark ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.surfaceContainer,
+          border: Border(top: BorderSide(color: theme.colorScheme.outline, width: 1)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -86,78 +81,60 @@ class _ChatInputState extends State<ChatInput> {
                   return TextField(
                     controller: widget.controller,
                     focusNode: _focusNode,
-                    style: AppTextStyles.bodyLarge,
+                    style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
                       hintText: 'Введите сообщение...',
-                      hintStyle: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textHint,
+                      hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusL,
-                        ),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                         borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusL,
-                        ),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                         borderSide: BorderSide(
                           color: isOverLimit
-                              ? AppColors.error.withValues(alpha: 0.5)
-                              : AppColors.border,
+                              ? theme.colorScheme.error.withValues(alpha: 0.5)
+                              : theme.colorScheme.outline,
                           width: 1,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusL,
-                        ),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                         borderSide: BorderSide(
-                          color: isOverLimit
-                              ? AppColors.error
-                              : AppColors.primary,
+                          color: isOverLimit ? theme.colorScheme.error : theme.colorScheme.primary,
                           width: 2,
                         ),
                       ),
                       filled: true,
                       fillColor: isOverLimit
-                          ? AppColors.error.withValues(alpha: 0.1)
-                          : AppColors.surface,
+                          ? theme.colorScheme.errorContainer
+                          : theme.colorScheme.surfaceContainerHighest,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppDimensions.paddingL,
                         vertical: AppDimensions.paddingM,
                       ),
                       counterStyle: isOverLimit
-                          ? const TextStyle(color: AppColors.error)
-                          : AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textMuted,
-                            ),
+                          ? theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error)
+                          : theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
                     minLines: 1,
                     maxLines: 4,
                     maxLength: _maxLength,
                     maxLengthEnforcement: MaxLengthEnforcement.none,
-                    buildCounter:
-                        (
-                          context, {
-                          required currentLength,
-                          required isFocused,
-                          maxLength,
-                        }) {
-                          return Container(
-                            padding: const EdgeInsets.only(right: 8, bottom: 4),
-                            child: Text(
-                              '$currentLength/$_maxLength',
-                              style: TextStyle(
-                                color: isOverLimit
-                                    ? AppColors.error
-                                    : AppColors.textMuted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          );
-                        },
+                    buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
+                      return Container(
+                        padding: const EdgeInsets.only(right: 8, bottom: 4),
+                        child: Text(
+                          '$currentLength/$_maxLength',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isOverLimit ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -167,10 +144,10 @@ class _ChatInputState extends State<ChatInput> {
               decoration: BoxDecoration(
                 gradient: _isExceedingLimit
                     ? null
-                    : const LinearGradient(
-                        colors: [AppColors.primary, AppColors.primaryLight],
+                    : LinearGradient(
+                        colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
                       ),
-                color: _isExceedingLimit ? AppColors.textMuted : null,
+                color: _isExceedingLimit ? theme.colorScheme.onSurfaceVariant : null,
                 shape: BoxShape.circle,
               ),
               child: IconButton(

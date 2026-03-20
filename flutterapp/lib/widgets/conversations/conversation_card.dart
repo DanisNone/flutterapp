@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/theme/app_theme.dart';
@@ -10,7 +9,6 @@ class ConversationCard extends StatelessWidget {
   final ConversationInfo info;
   final int currentUserId;
   final VoidCallback onTap;
-
   const ConversationCard({
     super.key,
     required this.info,
@@ -20,14 +18,15 @@ class ConversationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     String name = info.getName(currentUserId);
     String? avatarUrl = info.getAvatarUrl(currentUserId);
-
     return MyContainer(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
       borderRadius: AppDimensions.radiusL,
       opacity: 0.04,
-      border: Border.all(color: AppColors.border, width: 1),
       child: ListTile(
         contentPadding: const EdgeInsets.all(AppDimensions.paddingM),
         leading: ImageLoader().loadImage(
@@ -36,17 +35,16 @@ class ConversationCard extends StatelessWidget {
           Center(
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '#',
-              style: const TextStyle(
-                color: Colors.white,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: isDark ? Colors.white : AppColors.primaryDark,
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
               ),
             ),
           ),
         ),
         title: Text(
           name,
-          style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: info.lastMessage != null
             ? Column(
@@ -57,23 +55,23 @@ class ConversationCard extends StatelessWidget {
                     info.lastMessage!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _formatTime(info.lastUpdate),
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textMuted,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
               )
             : Text(
                 'Нет сообщений',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textHint,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
               ),
         trailing: Container(
@@ -81,17 +79,17 @@ class ConversationCard extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.primary.withValues(alpha: 0.2),
-                AppColors.glow.withValues(alpha: 0.1),
+                theme.colorScheme.primary.withValues(alpha: 0.2),
+                theme.colorScheme.secondary.withValues(alpha: 0.1),
               ],
             ),
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
-          child: const Icon(Icons.chevron_right, color: AppColors.primary),
+          child: Icon(Icons.chevron_right, color: theme.colorScheme.primary),
         ),
         onTap: onTap,
       ),
@@ -101,7 +99,6 @@ class ConversationCard extends StatelessWidget {
   String _formatTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
-
     if (difference.inDays > 0) {
       return '${difference.inDays} дн. назад';
     } else if (difference.inHours > 0) {

@@ -6,10 +6,10 @@ import 'package:flutterapp/service/login.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/widgets/auth/auth_field.dart';
 import 'package:flutterapp/utils/responsive.dart';
-import 'package:flutterapp/constants/app_colors.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:flutterapp/service/theme_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,16 +32,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _checkExistingToken() async {
     setState(() => _isCheckingToken = true);
-
     try {
       final JWTToken? token = await SecureStorageService().getJWTToken();
       if (token != null && await token.updateToken()) {
         if (!mounted) return;
-
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => ConversationsScreen(token: token),
+            builder: (context) => GradientBackground(
+              child: ConversationsScreen(token: token),
+            ),
           ),
         );
         return;
@@ -57,28 +57,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
-
     try {
       final token = await login(
         _emailController.text,
         _passwordController.text,
       );
-
       await SecureStorageService().saveJWTToken(token);
-
       if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ConversationsScreen(token: token),
+          builder: (context) => GradientBackground(
+            child: ConversationsScreen(token: token),
+          ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(text: 'Ошибка входа: $e', backgroundColor: AppColors.error),
+        MySnackBar(
+          text: 'Ошибка входа: $e',
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     } finally {
       if (mounted) {
@@ -89,18 +89,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: ResponsiveBuilder(
         builder: (context, isMobile, isTablet, isDesktop) {
           if (_isCheckingToken) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
               ),
             );
           }
-
           return Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -109,7 +111,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.all(32),
                 borderRadius: 20,
                 opacity: 0.06,
-                border: Border.all(color: AppColors.borderGlow, width: 1.5),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -118,11 +119,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, AppColors.glow],
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [theme.colorScheme.primary, theme.colorScheme.secondary]
+                              : [theme.colorScheme.primary, theme.colorScheme.secondary],
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.chat_bubble,
                         size: 40,
                         color: Colors.white,
@@ -131,14 +134,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
                     Text(
                       'Вход',
-                      style: AppTextStyles.headline2.copyWith(
-                        color: AppColors.glow,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: isDark ? theme.colorScheme.primary : theme.colorScheme.secondary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Войдите в свой аккаунт',
-                      style: AppTextStyles.subtitle,
+                      style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 32),
                     AuthField(
@@ -170,29 +173,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        const GradientBackground(
-                                          child: RegisterScreen(),
-                                        ),
+                                    builder: (context) => const GradientBackground(
+                                      child: RegisterScreen(),
+                                    ),
                                   ),
                                 );
                               },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          side: BorderSide(
-                            color: AppColors.primary.withValues(alpha: 0.5),
-                          ),
-                        ),
                         child: Text(
                           'Создать аккаунт',
-                          style: AppTextStyles.button.copyWith(
-                            color: AppColors.primary,
-                          ),
+                          style: theme.textTheme.labelLarge,
                         ),
                       ),
+                    ),
+                    // Theme Toggle
+                    const SizedBox(height: 24),
+                    Consumer<ThemeService>(
+                      builder: (context, themeService, child) {
+                        return IconButton(
+                          icon: Icon(
+                            themeService.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          onPressed: () => themeService.toggleTheme(),
+                        );
+                      },
                     ),
                   ],
                 ),

@@ -5,10 +5,10 @@ import 'package:flutterapp/service/register.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/utils/responsive.dart';
 import 'package:flutterapp/widgets/auth/auth_field.dart';
-import 'package:flutterapp/constants/app_colors.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:flutterapp/service/theme_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -23,7 +23,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _fullNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
   bool _isLoading = false;
 
   Future<void> _register() async {
@@ -35,14 +34,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showError('Пожалуйста, заполните все поля');
       return;
     }
-
     if (_passwordController.text != _confirmPasswordController.text) {
       _showError('Пароли не совпадают');
       return;
     }
-
     setState(() => _isLoading = true);
-
     try {
       final token = await register(
         _emailController.text,
@@ -51,15 +47,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _passwordController.text,
         _confirmPasswordController.text,
       );
-
       await SecureStorageService().saveJWTToken(token);
-
       if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ConversationsScreen(token: token),
+          builder: (context) => GradientBackground(
+            child: ConversationsScreen(token: token),
+          ),
         ),
       );
     } catch (e) {
@@ -73,13 +68,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(MySnackBar(text: message, backgroundColor: AppColors.error));
+    ScaffoldMessenger.of(context).showSnackBar(
+      MySnackBar(
+        text: message,
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: ResponsiveBuilder(
@@ -92,7 +93,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.all(32),
                 borderRadius: 20,
                 opacity: 0.06,
-                border: Border.all(color: AppColors.borderGlow, width: 1.5),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -101,11 +101,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [
-                            AppColors.secondary,
-                            AppColors.secondaryLight,
-                          ],
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [theme.colorScheme.secondary, theme.colorScheme.primary]
+                              : [theme.colorScheme.secondary, theme.colorScheme.primary],
                         ),
                       ),
                       child: const Icon(
@@ -117,14 +116,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 24),
                     Text(
                       'Регистрация',
-                      style: AppTextStyles.headline2.copyWith(
-                        color: AppColors.secondaryLight,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: isDark ? theme.colorScheme.secondary : theme.colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Создайте новый аккаунт',
-                      style: AppTextStyles.subtitle,
+                      style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 32),
                     AuthField(
@@ -175,29 +174,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        const GradientBackground(
-                                          child: LoginScreen(),
-                                        ),
+                                    builder: (context) => const GradientBackground(
+                                      child: LoginScreen(),
+                                    ),
                                   ),
                                 );
                               },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          side: BorderSide(
-                            color: AppColors.secondary.withValues(alpha: 0.5),
-                          ),
-                        ),
                         child: Text(
                           'Уже есть аккаунт? Войти',
-                          style: AppTextStyles.button.copyWith(
-                            color: AppColors.secondary,
-                          ),
+                          style: theme.textTheme.labelLarge,
                         ),
                       ),
+                    ),
+                    // Theme Toggle
+                    const SizedBox(height: 24),
+                    Consumer<ThemeService>(
+                      builder: (context, themeService, child) {
+                        return IconButton(
+                          icon: Icon(
+                            themeService.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          onPressed: () => themeService.toggleTheme(),
+                        );
+                      },
                     ),
                   ],
                 ),

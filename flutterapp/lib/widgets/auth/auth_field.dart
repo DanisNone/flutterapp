@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 
 class AuthField extends StatelessWidget {
   final TextEditingController controller;
@@ -23,16 +21,17 @@ class AuthField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextField(
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
       enabled: enabled,
-      style: AppTextStyles.bodyLarge,
+      style: theme.textTheme.bodyLarge,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
+        labelStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
@@ -40,14 +39,14 @@ class AuthField extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          borderSide: BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(color: theme.colorScheme.outline, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
         ),
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: theme.colorScheme.surfaceContainerHighest,
         contentPadding: const EdgeInsets.all(AppDimensions.paddingL),
       ),
     );

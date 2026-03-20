@@ -13,15 +13,14 @@ import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/error_view.dart';
 import 'package:flutterapp/widgets/common/empty_state.dart';
 import 'package:flutterapp/widgets/common/responsive_container.dart';
+import 'package:flutterapp/widgets/common/theme_toggle_button.dart';
 import 'package:flutterapp/widgets/conversations/conversation_card.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 
 class ConversationsScreen extends StatefulWidget {
   final JWTToken token;
-
   const ConversationsScreen({super.key, required this.token});
 
   @override
@@ -54,7 +53,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
 
   void _lastMessageUpdate(Message message) {
     if (_conversations == null) return;
-
     for (int i = 0; i < _conversations!.length; i++) {
       if (_conversations![i].id != message.conversationId) {
         continue;
@@ -73,20 +71,16 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
       final user = await getUser(widget.token);
       manager.loadConversations();
-
       if (!mounted) return;
-
       setState(() {
         _user = user;
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
-
       setState(() {
         _errorMessage = 'Ошибка загрузки: $e';
         _isLoading = false;
@@ -106,12 +100,14 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
 
   Widget _buildUserInfo() {
     if (_user == null) return const SizedBox();
-
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => ProfileScreen(token: widget.token)),
+          MaterialPageRoute(
+            builder: (_) => ProfileScreen(token: widget.token),
+          ),
         );
       },
       child: MyContainer(
@@ -127,9 +123,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
             ImageLoader().loadImage(
               _user!.avatarUrl,
               48,
-              const Icon(
+              Icon(
                 Icons.person,
-                color: Colors.white,
+                color: theme.colorScheme.onSurfaceVariant,
                 size: AppDimensions.iconM,
               ),
             ),
@@ -140,23 +136,22 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                 children: [
                   Text(
                     'Пользователь',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textMuted,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   Text(
                     _user!.username,
-                    style: AppTextStyles.bodyLarge.copyWith(
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            // Стрелка для индикации перехода
             Icon(
               Icons.chevron_right,
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurfaceVariant,
               size: AppDimensions.iconM,
             ),
           ],
@@ -166,10 +161,11 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   }
 
   Widget _buildHeader() {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Мои переписки', style: AppTextStyles.headline3),
+        Text('Мои переписки', style: theme.textTheme.headlineSmall),
         if (!_isLoading && _conversations != null && _conversations!.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(
@@ -195,35 +191,33 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   }
 
   Widget _buildContent() {
+    final theme = Theme.of(context);
     if (_conversations == null || _isLoading) {
       return const Padding(
         padding: EdgeInsets.only(top: 40),
         child: LoadingIndicator(message: 'Загрузка переписок...'),
       );
     }
-
     if (_errorMessage != null) {
       return ErrorView(error: _errorMessage!, onRetry: _refresh);
     }
-
     if (_conversations!.isEmpty) {
       return EmptyState(
         message: 'У вас пока нет переписок',
         icon: Icons.chat_bubble_outline,
         buttonText: 'Создать первую',
         onButtonPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SearchUsersScreen(
-                  token: widget.token,
-                  manager: manager,
-                  currentUser: _user!,
-                ),
-              ),
+          context,
+          MaterialPageRoute(
+            builder: (_) => SearchUsersScreen(
+              token: widget.token,
+              manager: manager,
+              currentUser: _user!,
             ),
+          ),
+        ),
       );
     }
-
     return ListView.builder(
       shrinkWrap: true,
       physics: const AlwaysScrollableScrollPhysics(),
@@ -231,7 +225,6 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       itemBuilder: (context, index) {
         final info = _conversations![index];
         final id = info.id;
-
         return ConversationCard(
           info: info,
           currentUserId: _user!.id,
@@ -256,6 +249,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GradientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -263,8 +257,10 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           title: const Text('Мои переписки'),
           elevation: 0,
           backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.textPrimary,
+          // foregroundColor is handled by theme, but ensuring contrast
+          foregroundColor: theme.colorScheme.onSurface, 
           actions: [
+            const ThemeToggleButton(),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _refresh,
@@ -292,7 +288,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         body: RefreshIndicator(
           onRefresh: _refresh,
           color: AppColors.primary,
-          backgroundColor: AppColors.surfaceDark,
+          backgroundColor: theme.colorScheme.surface,
           child: ResponsiveContainer(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

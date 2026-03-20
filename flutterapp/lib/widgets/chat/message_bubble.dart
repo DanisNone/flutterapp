@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/utils/responsive.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -9,7 +7,6 @@ class MessageBubble extends StatelessWidget {
   final String text;
   final bool isMine;
   final DateTime timestamp;
-
   const MessageBubble({
     super.key,
     required this.isSended,
@@ -20,6 +17,7 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -32,13 +30,13 @@ class MessageBubble extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           gradient: isMine
-              ? const LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryLight],
+              ? LinearGradient(
+                  colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )
               : null,
-          color: isMine ? null : AppColors.theirMessage,
+          color: isMine ? null : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
         ),
         child: Column(
@@ -47,8 +45,8 @@ class MessageBubble extends StatelessWidget {
             Text(
               text,
               style: isMine
-                  ? AppTextStyles.myMessage
-                  : AppTextStyles.theirMessage,
+                  ? theme.textTheme.bodyMedium?.copyWith(color: Colors.white)
+                  : theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: AppDimensions.paddingXS),
             Row(
@@ -56,11 +54,10 @@ class MessageBubble extends StatelessWidget {
               children: [
                 Text(
                   _formatTime(timestamp),
-                  style: TextStyle(
-                    fontSize: 10,
+                  style: theme.textTheme.bodySmall?.copyWith(
                     color: isMine
                         ? Colors.white.withValues(alpha: 0.7)
-                        : AppColors.textSecondary.withValues(alpha: 0.7),
+                        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -71,7 +68,7 @@ class MessageBubble extends StatelessWidget {
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        isMine ? Colors.white : AppColors.textSecondary,
+                        isMine ? Colors.white : theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),

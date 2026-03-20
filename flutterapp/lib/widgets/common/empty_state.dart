@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 
 class EmptyState extends StatelessWidget {
@@ -9,7 +7,6 @@ class EmptyState extends StatelessWidget {
   final IconData icon;
   final String? buttonText;
   final VoidCallback? onButtonPressed;
-
   const EmptyState({
     super.key,
     required this.message,
@@ -20,6 +17,7 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppDimensions.paddingXL),
@@ -31,25 +29,25 @@ class EmptyState extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.primary.withValues(alpha: 0.2),
-                    AppColors.glow.withValues(alpha: 0.1),
+                    theme.colorScheme.primary.withValues(alpha: 0.2),
+                    theme.colorScheme.secondary.withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
-              child: Icon(icon, size: 64, color: AppColors.primary),
+              child: Icon(icon, size: 64, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: AppDimensions.paddingL),
             Text(
               message,
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),

@@ -7,9 +7,7 @@ import 'package:flutterapp/service/conversations.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
-import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/widgets/common/responsive_container.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
@@ -18,7 +16,6 @@ class SearchUsersScreen extends StatefulWidget {
   final JWTToken token;
   final ChatManager manager;
   final User currentUser;
-
   const SearchUsersScreen({
     super.key,
     required this.token,
@@ -44,8 +41,6 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
     _listener = ChatListener(
       onSearchResult: (query, users) {
         if (!mounted) return;
-
-        // Игнорируем ответы для устаревших запросов
         if (query == _lastQuery) {
           setState(() {
             _searchResults = users;
@@ -80,7 +75,6 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
       });
       return;
     }
-
     setState(() {
       _isSearching = true;
       _errorMessage = null;
@@ -94,30 +88,25 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         MySnackBar(
           text: 'Нельзя начать переписку с собой',
-          backgroundColor: AppColors.warning,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
     }
-
     try {
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => const Center(child: LoadingIndicator()),
       );
-
       final (conversationId, alreadyExists) = await getOrCreateDialog(
         widget.currentUser,
         otherUser.username,
         widget.token,
       );
-
       if (!mounted) return;
-      Navigator.pop(context); // закрыть индикатор
-
-      widget.manager.loadConversations(); // обновить список переписок
-
+      Navigator.pop(context);
+      widget.manager.loadConversations();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -136,14 +125,15 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         MySnackBar(
           text: 'Ошибка создания: $e',
-          backgroundColor: AppColors.error,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
   }
 
-   @override
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GradientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -151,7 +141,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
           title: const Text('Поиск пользователей'),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: theme.colorScheme.onSurface,
         ),
         body: ResponsiveContainer(
           child: Column(
@@ -162,14 +152,12 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Введите имя пользователя...',
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusL,
-                      ),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                     ),
                     filled: true,
-                    fillColor: AppColors.surfaceDark.withValues(alpha: 0.5),
+                    fillColor: theme.colorScheme.surfaceContainerHighest,
                   ),
                   onChanged: _searchUsers,
                 ),
@@ -182,7 +170,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(_errorMessage!, style: AppTextStyles.bodyMedium),
+                        Text(_errorMessage!, style: theme.textTheme.bodyMedium),
                         ElevatedButton(
                           onPressed: () => _searchUsers(_searchController.text),
                           child: const Text('Повторить'),
@@ -191,11 +179,8 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
                     ),
                   ),
                 )
-              else if (_searchResults.isEmpty &&
-                  _searchController.text.isNotEmpty)
-                const Expanded(
-                  child: Center(child: Text('Пользователи не найдены')),
-                )
+              else if (_searchResults.isEmpty && _searchController.text.isNotEmpty)
+                const Expanded(child: Center(child: Text('Пользователи не найдены')))
               else if (_searchResults.isEmpty)
                 const Expanded(child: Center(child: Text('Начните поиск')))
               else
@@ -208,10 +193,10 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
                         leading: ImageLoader().loadImage(
                           user.avatarUrl,
                           40,
-                          const Icon(Icons.person),
+                          Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant),
                         ),
-                        title: Text(user.username),
-                        subtitle: Text(user.fullName ?? ''),
+                        title: Text(user.username, style: theme.textTheme.titleMedium),
+                        subtitle: Text(user.fullName ?? '', style: theme.textTheme.bodySmall),
                         onTap: () => _createConversationWithUser(user),
                       );
                     },

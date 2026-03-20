@@ -5,19 +5,20 @@ import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/service/user.dart';
+import 'package:flutterapp/service/theme_service.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/error_view.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
 import 'package:flutterapp/widgets/common/responsive_container.dart';
+import 'package:flutterapp/widgets/common/theme_toggle_button.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/constants/app_text_styles.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   final JWTToken token;
-
   const ProfileScreen({super.key, required this.token});
 
   @override
@@ -29,7 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   bool _isEditing = false;
-
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
 
@@ -44,11 +44,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
       final user = await getUser(widget.token);
       if (!mounted) return;
-
       setState(() {
         _user = user;
         _bioController.text = user.bio ?? '';
@@ -57,7 +55,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-
       setState(() {
         _errorMessage = 'Ошибка загрузки профиля: $e';
         _isLoading = false;
@@ -69,7 +66,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _isEditing = false;
     });
-
     ScaffoldMessenger.of(context).showSnackBar(
       MySnackBar(text: 'Профиль обновлен', backgroundColor: AppColors.success),
     );
@@ -96,8 +92,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildRoleBadge() {
+    final theme = Theme.of(context);
     final isAdmin = _user?.role == UserRole.admin;
-
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingM,
@@ -141,6 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     TextEditingController? controller,
     int maxLines = 1,
   }) {
+    final theme = Theme.of(context);
     return MyContainer(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       borderRadius: 16,
@@ -167,8 +164,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: AppDimensions.paddingM),
               Text(
                 title,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textMuted,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -178,12 +175,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: controller,
               maxLines: maxLines,
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.textPrimary,
-              ),
+              style: theme.textTheme.bodyLarge,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.surfaceDark.withValues(alpha: 0.5),
+                fillColor: theme.colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -194,11 +189,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           else
             Text(
               value.isEmpty ? 'Не указано' : value,
-              style: AppTextStyles.bodyLarge.copyWith(
+              style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w500,
                 color: value.isEmpty
-                    ? AppColors.textMuted
-                    : AppColors.textPrimary,
+                    ? theme.colorScheme.onSurfaceVariant
+                    : theme.colorScheme.onSurface,
               ),
             ),
         ],
@@ -206,7 +201,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Список информационных карточек (без статуса isActive)
   List<Widget> _buildInfoCards() {
     final dateFormat = DateFormat('dd.MM.yyyy');
     return [
@@ -239,55 +233,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildContent() {
+    final theme = Theme.of(context);
     if (_isLoading) {
       return const Center(
         child: LoadingIndicator(message: 'Загрузка профиля...'),
       );
     }
-
     if (_errorMessage != null) {
       return ErrorView(error: _errorMessage!, onRetry: _loadUserProfile);
     }
-
     if (_user == null) {
-      return const Center(child: Text('Пользователь не найден'));
+      return Center(child: Text('Пользователь не найден', style: theme.textTheme.bodyLarge));
     }
-
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         children: [
           const SizedBox(height: AppDimensions.paddingL),
-
-          // Avatar Section
           _buildAvatar(),
           const SizedBox(height: AppDimensions.paddingM),
-
-          // Username
           Text(
             '@${_user!.username}',
-            style: AppTextStyles.headline3.copyWith(
-              color: AppColors.textPrimary,
-            ),
+            style: theme.textTheme.headlineSmall,
           ),
           const SizedBox(height: AppDimensions.paddingXS),
-
-          // Role Badge
           _buildRoleBadge(),
           const SizedBox(height: AppDimensions.paddingXL),
-
-          // Info Cards — всегда вертикальный список (без сетки)
           Column(
-            children:
-                _buildInfoCards()
-                    .expand(
-                      (widget) => [
-                        widget,
-                        const SizedBox(height: AppDimensions.paddingM),
-                      ],
-                    )
-                    .toList()
-                  ..removeLast(),
+            children: _buildInfoCards()
+                .expand(
+                  (widget) => [
+                    widget,
+                    const SizedBox(height: AppDimensions.paddingM),
+                  ],
+                )
+                .toList()
+              ..removeLast(),
           ),
         ],
       ),
@@ -303,6 +284,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GradientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -310,8 +292,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: const Text('Профиль'),
           elevation: 0,
           backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: theme.colorScheme.onSurface,
           actions: [
+            const ThemeToggleButton(),
             if (!_isLoading && _user != null)
               if (_isEditing) ...[
                 IconButton(
@@ -331,13 +314,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () => setState(() => _isEditing = true),
                 ),
               ],
-
             IconButton(
               icon: const Icon(Icons.logout),
               tooltip: 'Выйти',
               onPressed: _logout,
             ),
-
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Обновить',
@@ -348,7 +329,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         body: RefreshIndicator(
           onRefresh: _loadUserProfile,
           color: AppColors.primary,
-          backgroundColor: AppColors.surfaceDark,
+          backgroundColor: theme.colorScheme.surface,
           child: ResponsiveContainer(child: _buildContent()),
         ),
       ),
