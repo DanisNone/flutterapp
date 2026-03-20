@@ -3,7 +3,7 @@ import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
-import 'package:flutterapp/screens/profile_screen.dart';
+import 'package:flutterapp/screens/main/profile_content.dart';
 import 'package:flutterapp/screens/search_users_screen.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
@@ -19,15 +19,15 @@ import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 
-class ConversationsScreen extends StatefulWidget {
+class ConversationsContent extends StatefulWidget {
   final JWTToken token;
-  const ConversationsScreen({super.key, required this.token});
+  const ConversationsContent({super.key, required this.token});
 
   @override
-  State<ConversationsScreen> createState() => _ConversationsScreenState();
+  State<ConversationsContent> createState() => _ConversationsContentState();
 }
 
-class _ConversationsScreenState extends State<ConversationsScreen> {
+class _ConversationsContentState extends State<ConversationsContent> {
   User? _user;
   List<ConversationInfo>? _conversations;
   bool _isLoading = false;
@@ -106,7 +106,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ProfileScreen(token: widget.token),
+            builder: (_) => ProfileContent(token: widget.token),
           ),
         );
       },
@@ -250,57 +250,55 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GradientBackground(
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: const Text('Мои переписки'),
+        elevation: 0,
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: const Text('Мои переписки'),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          // foregroundColor is handled by theme, but ensuring contrast
-          foregroundColor: theme.colorScheme.onSurface, 
-          actions: [
-            const ThemeToggleButton(),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _refresh,
-              tooltip: 'Обновить',
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            if (_user == null) return;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SearchUsersScreen(
-                  token: widget.token,
-                  manager: manager,
-                  currentUser: _user!,
-                ),
+        // foregroundColor is handled by theme, but ensuring contrast
+        foregroundColor: theme.colorScheme.onSurface, 
+        actions: [
+          const ThemeToggleButton(),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refresh,
+            tooltip: 'Обновить',
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          if (_user == null) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => SearchUsersScreen(
+                token: widget.token,
+                manager: manager,
+                currentUser: _user!,
               ),
-            );
-          },
-          backgroundColor: AppColors.primary,
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
-        body: RefreshIndicator(
-          onRefresh: _refresh,
-          color: AppColors.primary,
-          backgroundColor: theme.colorScheme.surface,
-          child: ResponsiveContainer(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: AppDimensions.paddingM),
-                _buildUserInfo(),
-                const SizedBox(height: AppDimensions.paddingXL),
-                _buildHeader(),
-                const SizedBox(height: AppDimensions.paddingL),
-                Expanded(child: _buildContent()),
-              ],
             ),
+          );
+        },
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        color: AppColors.primary,
+        backgroundColor: theme.colorScheme.surface,
+        child: ResponsiveContainer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppDimensions.paddingM),
+              _buildUserInfo(),
+              const SizedBox(height: AppDimensions.paddingXL),
+              _buildHeader(),
+              const SizedBox(height: AppDimensions.paddingL),
+              Expanded(child: _buildContent()),
+            ],
           ),
         ),
       ),

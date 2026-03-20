@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
-import 'package:flutterapp/screens/conversations_screen.dart';
+import 'package:flutterapp/screens/main/main_screen.dart';
 import 'package:flutterapp/service/register.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/utils/responsive.dart';
@@ -53,7 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => GradientBackground(
-            child: ConversationsScreen(token: token),
+            child: MainScreen(token: token),
           ),
         ),
       );

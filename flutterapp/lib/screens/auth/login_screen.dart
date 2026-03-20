@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/register_screen.dart';
-import 'package:flutterapp/screens/conversations_screen.dart';
 import 'package:flutterapp/model/jwttoken.dart';
+import 'package:flutterapp/screens/main/main_screen.dart';
 import 'package:flutterapp/service/login.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/widgets/auth/auth_field.dart';
@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => GradientBackground(
-              child: ConversationsScreen(token: token),
+              child: MainScreen(token: token),
             ),
           ),
         );
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => GradientBackground(
-            child: ConversationsScreen(token: token),
+            child: MainScreen(token: token),
           ),
         ),
       );

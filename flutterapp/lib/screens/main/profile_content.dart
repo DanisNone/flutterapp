@@ -5,7 +5,6 @@ import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/service/user.dart';
-import 'package:flutterapp/service/theme_service.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/error_view.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
@@ -15,17 +14,16 @@ import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileContent extends StatefulWidget {
   final JWTToken token;
-  const ProfileScreen({super.key, required this.token});
+  const ProfileContent({super.key, required this.token});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileContent> createState() => _ProfileContentState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileContentState extends State<ProfileContent> {
   User? _user;
   bool _isLoading = true;
   String? _errorMessage;
@@ -92,7 +90,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildRoleBadge() {
-    final theme = Theme.of(context);
     final isAdmin = _user?.role == UserRole.admin;
     return Container(
       padding: const EdgeInsets.symmetric(
