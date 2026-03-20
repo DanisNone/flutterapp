@@ -2,10 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterapp/firebase_options.dart';
-
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
-
+import 'package:flutterapp/service/theme_service.dart';
+import 'package:provider/provider.dart';
 
 // 1. Обработчик фоновых сообщений
 @pragma('vm:entry-point')
@@ -19,13 +19,21 @@ void main() async {
 
   // 2. Инициализация Firebase
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
   // 3. Фоновый обработчик
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  runApp(const MyApp());
+  // 4. Инициализация сервиса тем
+  final themeService = ThemeService();
+
+  runApp(
+    ChangeNotifierProvider<ThemeService>.value(
+      value: themeService,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -51,7 +59,6 @@ class _MyAppState extends State<MyApp> {
       badge: true,
       sound: true,
     );
-
     if (settings.authorizationStatus != AuthorizationStatus.authorized) {
       debugPrint('Нет разрешения на уведомления');
       return;
@@ -83,11 +90,17 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Chat',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      home: const GradientBackground(child: LoginScreen()),
+    return Consumer<ThemeService>(
+      builder: (context, themeService, child) {
+        return MaterialApp(
+          title: 'Flutter Chat',
+          debugShowCheckedModeBanner: false,
+          themeMode: themeService.themeMode,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          home: const GradientBackground(child: LoginScreen()),
+        );
+      },
     );
   }
 }
