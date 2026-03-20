@@ -3,10 +3,8 @@ import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
-import 'package:flutterapp/screens/main/profile_content.dart';
 import 'package:flutterapp/screens/search_users_screen.dart';
 import 'package:flutterapp/service/chat_manager.dart';
-import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
@@ -16,8 +14,6 @@ import 'package:flutterapp/widgets/common/responsive_container.dart';
 import 'package:flutterapp/widgets/common/theme_toggle_button.dart';
 import 'package:flutterapp/widgets/conversations/conversation_card.dart';
 import 'package:flutterapp/constants/app_colors.dart';
-import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/theme/app_theme.dart';
 
 class ConversationsContent extends StatefulWidget {
   final JWTToken token;
@@ -98,100 +94,7 @@ class _ConversationsContentState extends State<ConversationsContent> {
     await _loadConversations();
   }
 
-  Widget _buildUserInfo() {
-    if (_user == null) return const SizedBox();
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProfileContent(token: widget.token),
-          ),
-        );
-      },
-      child: MyContainer(
-        padding: const EdgeInsets.all(AppDimensions.paddingM),
-        borderRadius: 16,
-        opacity: 0.06,
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        child: Row(
-          children: [
-            ImageLoader().loadImage(
-              _user!.avatarUrl,
-              48,
-              Icon(
-                Icons.person,
-                color: theme.colorScheme.onSurfaceVariant,
-                size: AppDimensions.iconM,
-              ),
-            ),
-            const SizedBox(width: AppDimensions.paddingM),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Пользователь',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  Text(
-                    _user!.username,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: theme.colorScheme.onSurfaceVariant,
-              size: AppDimensions.iconM,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('Мои переписки', style: theme.textTheme.headlineSmall),
-        if (!_isLoading && _conversations != null && _conversations!.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingM,
-              vertical: AppDimensions.paddingXS,
-            ),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryLight],
-              ),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
-            ),
-            child: Text(
-              '${_conversations!.length}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
   Widget _buildContent() {
-    final theme = Theme.of(context);
     if (_conversations == null || _isLoading) {
       return const Padding(
         padding: EdgeInsets.only(top: 40),
@@ -289,17 +192,7 @@ class _ConversationsContentState extends State<ConversationsContent> {
         color: AppColors.primary,
         backgroundColor: theme.colorScheme.surface,
         child: ResponsiveContainer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppDimensions.paddingM),
-              _buildUserInfo(),
-              const SizedBox(height: AppDimensions.paddingXL),
-              _buildHeader(),
-              const SizedBox(height: AppDimensions.paddingL),
-              Expanded(child: _buildContent()),
-            ],
-          ),
+          child: Expanded(child: _buildContent())
         ),
       ),
     );
