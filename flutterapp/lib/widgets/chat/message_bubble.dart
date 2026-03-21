@@ -18,63 +18,70 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDesktop = Responsive.isDesktop(context);
+    final maxWidth = isDesktop ? 400.0 : MediaQuery.of(context).size.width * 0.7;
+
+    final bubbleGradient = isMine
+        ? LinearGradient(
+            colors: [
+              theme.colorScheme.primary,
+              theme.colorScheme.secondary,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+        : null;
+
+    final bubbleColor = isMine ? null : theme.colorScheme.surfaceContainerHighest;
+    final messageColor = isMine ? Colors.white : theme.colorScheme.onSurface;
+    final timeColor = isMine
+        ? Colors.white.withValues(alpha: 0.7)
+        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7);
+    final indicatorColor = isMine ? Colors.white : theme.colorScheme.onSurfaceVariant;
+
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: AppDimensions.paddingXS),
-        padding: const EdgeInsets.all(AppDimensions.paddingM),
-        constraints: BoxConstraints(
-          maxWidth: Responsive.isDesktop(context)
-              ? 400
-              : MediaQuery.of(context).size.width * 0.7,
-        ),
-        decoration: BoxDecoration(
-          gradient: isMine
-              ? LinearGradient(
-                  colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isMine ? null : theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              text,
-              style: isMine
-                  ? theme.textTheme.bodyMedium?.copyWith(color: Colors.white)
-                  : theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: AppDimensions.paddingXS),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _formatTime(timestamp),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isMine
-                        ? Colors.white.withValues(alpha: 0.7)
-                        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: AppDimensions.paddingXS),
+          padding: const EdgeInsets.all(AppDimensions.paddingM),
+          decoration: BoxDecoration(
+            gradient: bubbleGradient,
+            color: bubbleColor,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                style: theme.textTheme.bodyMedium?.copyWith(color: messageColor),
+              ),
+              const SizedBox(height: AppDimensions.paddingXS),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _formatTime(timestamp),
+                    style: theme.textTheme.bodySmall?.copyWith(color: timeColor),
                   ),
-                ),
-                const SizedBox(width: 4),
-                if (!isSended)
-                  SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isMine ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                  if (!isSended) ...[
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ],
+                  ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

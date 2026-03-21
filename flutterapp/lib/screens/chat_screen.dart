@@ -221,22 +221,33 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return GradientBackground(
       child: PopScope(
         canPop: !_isSelectionMode,
-        onPopInvokedWithResult: (bool didPop, dynamic) {
+        onPopInvokedWithResult: (didPop, _) {
           if (!didPop && _isSelectionMode) {
             _clearSelection();
           }
         },
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: _isSelectionMode ? _buildSelectionAppBar(theme) : _buildNormalAppBar(theme),
-          body: Column(
-            children: [
-              Expanded(child: _buildBody(theme)),
-              ChatInput(controller: _controller, onSend: _sendMessage),
-            ],
+          appBar: _isSelectionMode
+              ? _buildSelectionAppBar(theme)
+              : _buildNormalAppBar(theme),
+          body: SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildBody(theme),
+                ),
+                ChatInput(
+                  controller: _controller,
+                  onSend: _sendMessage,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -248,25 +259,39 @@ class _ChatScreenState extends State<ChatScreen> {
       elevation: 0,
       backgroundColor: Colors.transparent,
       foregroundColor: theme.colorScheme.onSurface,
-      title: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(widget.chatName, style: theme.textTheme.titleMedium),
-      ),
       centerTitle: true,
+      title: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 320),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            widget.chatName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium,
+          ),
+        ),
+      ),
     );
   }
 
   AppBar _buildSelectionAppBar(ThemeData theme) {
+    final canDelete = _user != null &&
+        _selectedMessages.isNotEmpty &&
+        _selectedMessages.every((message) => message.senderId == _user!.id);
+
     return AppBar(
       elevation: 0,
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
       foregroundColor: theme.colorScheme.onSurface,
       leading: IconButton(
         icon: const Icon(Icons.close),
+        tooltip: 'Закрыть',
         onPressed: _clearSelection,
       ),
       title: Text(
@@ -276,11 +301,13 @@ class _ChatScreenState extends State<ChatScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.copy),
+          tooltip: 'Копировать',
           onPressed: _copySelectedMessages,
         ),
-        if (_selectedMessages.every((message) => message.senderId == _user!.id))
+        if (canDelete)
           IconButton(
             icon: const Icon(Icons.delete),
+            tooltip: 'Удалить',
             onPressed: _deleteSelectedMessages,
           ),
       ],
@@ -291,86 +318,90 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_isLoading || _messages == null) {
       return const LoadingIndicator(message: 'Загрузка сообщений...');
     }
+
     if (_messages!.isEmpty) {
-      return EmptyState(
+      return const EmptyState(
         message: 'Сообщений пока нет.\nНапишите что-нибудь!',
         icon: Icons.chat_bubble_outline,
       );
     }
-    final messagesList = _messages!.toList();
-    return Container(
-      color: Colors.transparent,
-      child: ListView.builder(
-        controller: _scrollController,
-        reverse: true,
-        padding: const EdgeInsets.all(AppDimensions.paddingL),
-        itemCount: messagesList.length,
-        itemBuilder: (context, index) {
-          final message = messagesList[messagesList.length - 1 - index];
-          final isMine = _user != null && message.senderId == _user!.id;
-          bool showDateHeader = false;
-          if (index == messagesList.length - 1) {
-            showDateHeader = true;
-          } else {
-            final previousMessage = messagesList[messagesList.length - index - 2];
-            if (!_isSameDay(previousMessage.createdAt, message.createdAt)) {
-              showDateHeader = true;
-            }
-          }
-          List<Widget> children = [];
-          if (showDateHeader) {
-            children.add(
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      _formatDate(message.createdAt),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }
-          children.add(
-            GestureDetector(
-              onLongPress: () => _toggleSelection(message),
-              onTap: () => _toggleSelection(message, isTap: true),
-              onSecondaryTap: () => _toggleSelection(message),
-              child: Container(
-                decoration: _selectedMessages.contains(message)
-                    ? BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        border: Border.all(
-                          color: theme.colorScheme.primary,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      )
-                    : null,
-                child: MessageBubble(
-                  isSended: message.id != null,
-                  text: message.text,
-                  isMine: isMine,
-                  timestamp: message.createdAt,
-                ),
-              ),
+
+    final messages = _messages!;
+
+    return ListView.builder(
+      controller: _scrollController,
+      reverse: true,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      itemCount: messages.length,
+      itemBuilder: (context, index) {
+        final message = messages[messages.length - 1 - index];
+        final previousMessage = index < messages.length - 1
+            ? messages[messages.length - index - 2]
+            : null;
+
+        final showDateHeader =
+            previousMessage == null || !_isSameDay(previousMessage.createdAt, message.createdAt);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (showDateHeader) _buildDateHeader(theme, message.createdAt),
+            _buildMessageItem(theme, message),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDateHeader(ThemeData theme, DateTime date) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            _formatDate(date),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
-          );
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
-          );
-        },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageItem(ThemeData theme, Message message) {
+    final isMine = _user != null && message.senderId == _user!.id;
+    final isSelected = _selectedMessages.contains(message);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => _toggleSelection(message),
+      onTap: () => _toggleSelection(message, isTap: true),
+      onSecondaryTap: () => _toggleSelection(message),
+      child: Container(
+        decoration: isSelected
+            ? BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                border: Border.all(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              )
+            : null,
+        child: MessageBubble(
+          isSended: message.id != null,
+          text: message.text,
+          isMine: isMine,
+          timestamp: message.createdAt,
+        ),
       ),
     );
   }
