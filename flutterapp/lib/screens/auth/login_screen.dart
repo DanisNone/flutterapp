@@ -3,6 +3,7 @@ import 'package:flutterapp/screens/auth/register_screen.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/screens/main/main_screen.dart';
 import 'package:flutterapp/service/login.dart';
+import 'package:flutterapp/service/notification_service.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/widgets/auth/auth_field.dart';
 import 'package:flutterapp/utils/responsive.dart';
@@ -57,10 +58,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
+    final fcmToken = context.read<NotificationService>().token;
     try {
       final token = await login(
         _emailController.text,
         _passwordController.text,
+        fcmToken
       );
       await SecureStorageService().saveJWTToken(token);
       if (!mounted) return;

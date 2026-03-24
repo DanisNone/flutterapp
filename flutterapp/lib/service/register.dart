@@ -9,6 +9,7 @@ Future<JWTToken> register(
   String fullName,
   String password,
   String confirmPassword,
+  String? fcmToken
 ) async {
   if (password != confirmPassword) {
     throw Exception('Пароли не совпадают');
@@ -21,14 +22,14 @@ Future<JWTToken> register(
   try {
     final res = await http
         .post(
-          Uri.parse(registerUrl),
+          Uri.parse(registerUrl).replace(queryParameters: {"fcm_token": fcmToken}),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             "email": email,
             "username": username,
             "full_name": fullName,
             "password": password,
-            "confirm_password": confirmPassword,
+            "confirm_password": confirmPassword
           }),
         )
         .timeout(const Duration(seconds: 10));

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/screens/main/main_screen.dart';
+import 'package:flutterapp/service/notification_service.dart';
 import 'package:flutterapp/service/register.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/utils/responsive.dart';
@@ -40,12 +41,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     setState(() => _isLoading = true);
     try {
+      final fcmToken = context.read<NotificationService>().token;
       final token = await register(
         _emailController.text,
         _usernameController.text,
         _fullNameController.text,
         _passwordController.text,
         _confirmPasswordController.text,
+        fcmToken
       );
       await SecureStorageService().saveJWTToken(token);
       if (!mounted) return;
