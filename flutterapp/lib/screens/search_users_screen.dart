@@ -114,8 +114,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
             conversationId: conversationId,
             userId: widget.currentUser.id,
             chatName: otherUser.username,
-            token: widget.token,
-            manager: widget.manager,
+            token: widget.token
           ),
         ),
       );

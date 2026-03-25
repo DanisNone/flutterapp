@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterapp/model/message.dart';
+import 'package:flutterapp/model/chat_thread_state.dart';
 import 'package:flutterapp/model/jwttoken.dart';
-import 'package:flutterapp/model/user.dart';
-import 'package:flutterapp/service/api.dart' show getUser;
-import 'package:flutterapp/service/chat_manager.dart';
+import 'package:flutterapp/model/message.dart';
+import 'package:flutterapp/service/chat_repository.dart';
 import 'package:flutterapp/widgets/common/empty_state.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
+import 'package:flutterapp/widgets/common/error_view.dart';
 import 'package:flutterapp/widgets/chat/message_bubble.dart';
 import 'package:flutterapp/widgets/chat/chat_input.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
+import 'package:provider/provider.dart';
 
 class ChatScreen extends StatefulWidget {
   final int conversationId;
   final int userId;
   final String chatName;
   final JWTToken token;
-  final ChatManager manager;
+
   const ChatScreen({
     super.key,
     required this.conversationId,
     required this.chatName,
     required this.userId,
-    required this.token,
-    required this.manager,
+    required this.token
   });
 
   @override
@@ -33,95 +33,63 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  User? _user;
-  List<Message>? _messages;
-  bool _isLoading = true;
-  late ChatListener _listener;
+  late ChatRepository _repository;
+  bool _initialized = false;
+
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final Set<Message> _selectedMessages = {};
+
   bool _isSelectionMode = false;
+  bool _initialScrollScheduled = false;
+  bool _paginationArmed = true;
 
   @override
   void initState() {
     super.initState();
-    widget.manager.setToken(widget.token);
-    _listener = ChatListener(
-      newMessage: _handleIncomingMessage,
-      loadMessages: _handleLoadMessage,
-    );
     _scrollController.addListener(_onScroll);
-    widget.manager.addListener(_listener);
-    _init();
   }
 
-  Future<void> _init() async {
-    late User user;
-    while (true) {
-      try {
-        user = await getUser(widget.token);
-        widget.manager.loadLast(widget.conversationId);
-        break;
-      } catch (e) {
-        if (!mounted) return;
-      }
-    }
-    if (!mounted) return;
-    setState(() {
-      _user = user;
-      _isLoading = false;
-    });
-    _scrollToBottom();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initialized) return;
+    _initialized = true;
+
+    _repository = context.read<ChatRepository>();
+    _repository.setToken(widget.token);
+    _repository.ensureThreadLoaded(widget.conversationId);
   }
 
-  void _handleIncomingMessage(Message message) {
-    if (_messages != null &&
-        _messages!.isNotEmpty &&
-        _messages!.first.id == message.id) {
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final thread = _repository.threadFor(widget.conversationId);
+    if (thread == null || !thread.canLoadOlder) {
+      _paginationArmed = true;
       return;
     }
-    try {
-      if (!mounted) return;
-      if (message.conversationId == widget.conversationId) {
-        setState(() {
-          _messages ??= [];
-          if (message.senderId != _user?.id) {
-            _messages!.add(message);
-          } else {
-            bool find = false;
-            for (var userMessage in _messages!) {
-              if (userMessage.id == null && userMessage.text == message.text) {
-                userMessage.id = message.id;
-                userMessage.createdAt = message.createdAt;
-                find = true;
-                break;
-              }
-            }
-            if (!find) {
-              _messages!.add(message);
-            }
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint('Error parsing message: $e');
-    }
-  }
 
-  void _handleLoadMessage(List<Message> messages) {
-    _messages ??= [];
-    for (var message in messages) {
-      if (_messages!.isEmpty || _messages!.first.id != message.id) {
-        _messages!.insert(0, message);
-      }
+    final nearTop = _scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 50;
+
+    if (!nearTop) {
+      _paginationArmed = true;
+      return;
     }
-    setState(() {});
+
+    if (!_paginationArmed) return;
+
+    _paginationArmed = false;
+    _repository.loadOlder(widget.conversationId);
   }
 
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    if (!widget.manager.isConnected) {
+
+    if (!_repository.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         MySnackBar(
           text: 'Нет соединения с сервером',
@@ -129,46 +97,27 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     }
-    setState(() {
-      _messages ??= [];
-      _messages!.add(
-        Message(
-          id: null,
-          text: text,
-          senderId: widget.userId,
-          createdAt: DateTime.now().toUtc(),
-          conversationId: widget.conversationId,
-        ),
-      );
-      _scrollToBottom();
-    });
-    widget.manager.sendMessage(widget.conversationId, text);
+
+    _repository.sendMessage(
+      widget.conversationId,
+      text,
+      senderId: widget.userId,
+    );
+
     _controller.clear();
+    _scrollToBottom();
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        final min = _scrollController.position.minScrollExtent;
-        _scrollController.jumpTo(min);
-      }
+      if (!_scrollController.hasClients) return;
+      _scrollController.jumpTo(_scrollController.position.minScrollExtent);
     });
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 50) {
-      if (_messages != null && _messages!.isNotEmpty) {
-        final oldestMessage = _messages!.first;
-        widget.manager.loadBefore(oldestMessage);
-      }
-    }
-  }
-
   void _toggleSelection(Message message, {bool isTap = false}) {
-    if (isTap && !_isSelectionMode) {
-      return;
-    }
+    if (isTap && !_isSelectionMode) return;
+
     if (!_isSelectionMode) {
       _isSelectionMode = true;
       _selectedMessages.clear();
@@ -179,10 +128,12 @@ class _ChatScreenState extends State<ChatScreen> {
       } else {
         _selectedMessages.add(message);
       }
+
       if (_selectedMessages.isEmpty) {
         _isSelectionMode = false;
       }
     }
+
     setState(() {});
   }
 
@@ -194,13 +145,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _copySelectedMessages() {
     if (_selectedMessages.isEmpty) return;
-    final text = _selectedMessages.map((m) => m.text).join('\n');
+
+    final sorted = _selectedMessages.toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    final text = sorted.map((m) => m.text).join('\n');
     Clipboard.setData(ClipboardData(text: text));
     _clearSelection();
   }
 
   void _deleteSelectedMessages() {
     if (_selectedMessages.isEmpty) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       MySnackBar(
         text: 'Это не реализовано',
@@ -214,13 +170,23 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    widget.manager.removeListener(_listener);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final repo = context.watch<ChatRepository>();
+    final thread = repo.threadFor(widget.conversationId);
+
+    if (!_initialScrollScheduled && thread?.messages.isNotEmpty == true) {
+      _initialScrollScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _scrollToBottom();
+        }
+      });
+    }
 
     return GradientBackground(
       child: PopScope(
@@ -240,7 +206,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: _buildBody(theme),
+                  child: _buildBody(theme, thread),
                 ),
                 ChatInput(
                   controller: _controller,
@@ -281,9 +247,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   AppBar _buildSelectionAppBar(ThemeData theme) {
-    final canDelete = _user != null &&
-        _selectedMessages.isNotEmpty &&
-        _selectedMessages.every((message) => message.senderId == _user!.id);
+    final canDelete = _selectedMessages.isNotEmpty &&
+        _selectedMessages.every((message) => message.senderId == widget.userId);
 
     return AppBar(
       elevation: 0,
@@ -314,34 +279,60 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildBody(ThemeData theme) {
-    if (_isLoading || _messages == null) {
+  Widget _buildBody(ThemeData theme, ChatThreadState? thread) {
+    if (thread == null || thread.isLoadingInitial) {
       return const LoadingIndicator(message: 'Загрузка сообщений...');
     }
 
-    if (_messages!.isEmpty) {
+    if (thread.errorMessage != null && thread.messages.isEmpty) {
+      return ErrorView(
+        error: thread.errorMessage!,
+        onRetry: () {
+          _repository.ensureThreadLoaded(
+            widget.conversationId,
+            force: true,
+          );
+        },
+      );
+    }
+
+    if (thread.messages.isEmpty) {
       return const EmptyState(
         message: 'Сообщений пока нет.\nНапишите что-нибудь!',
         icon: Icons.chat_bubble_outline,
       );
     }
 
-    final messages = _messages!;
+    final messages = thread.messages;
+    final showOlderLoader = thread.loadingOlder;
 
     return ListView.builder(
       controller: _scrollController,
       reverse: true,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.all(AppDimensions.paddingL),
-      itemCount: messages.length,
+      itemCount: messages.length + (showOlderLoader ? 1 : 0),
       itemBuilder: (context, index) {
+        if (showOlderLoader && index == messages.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        }
+
         final message = messages[messages.length - 1 - index];
         final previousMessage = index < messages.length - 1
             ? messages[messages.length - index - 2]
             : null;
 
-        final showDateHeader =
-            previousMessage == null || !_isSameDay(previousMessage.createdAt, message.createdAt);
+        final showDateHeader = previousMessage == null ||
+            !_isSameDay(previousMessage.createdAt, message.createdAt);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -377,7 +368,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageItem(ThemeData theme, Message message) {
-    final isMine = _user != null && message.senderId == _user!.id;
+    final isMine = message.senderId == widget.userId;
     final isSelected = _selectedMessages.contains(message);
 
     return GestureDetector(
@@ -407,7 +398,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+    final la = a.toLocal();
+    final lb = b.toLocal();
+    return la.year == lb.year && la.month == lb.month && la.day == lb.day;
   }
 
   String _formatDate(DateTime date) {
@@ -415,8 +408,12 @@ class _ChatScreenState extends State<ChatScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final messageDate = DateTime(date.year, date.month, date.day);
+
     if (messageDate == today) return 'Сегодня';
     if (messageDate == today.subtract(const Duration(days: 1))) return 'Вчера';
-    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
+
+    return '${date.day.toString().padLeft(2, '0')}.'
+        '${date.month.toString().padLeft(2, '0')}.'
+        '${date.year}';
   }
 }

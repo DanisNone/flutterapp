@@ -2,12 +2,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterapp/firebase_options.dart';
+import 'package:flutterapp/service/chat_manager.dart';
+import 'package:flutterapp/service/chat_repository.dart';
 import 'package:flutterapp/service/notification_service.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/service/theme_service.dart';
 import 'package:provider/provider.dart';
-
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -29,6 +30,17 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider<ChatManager>(
+          create: (_) => ChatManager(),
+        ),
+        ChangeNotifierProxyProvider<ChatManager, ChatRepository>(
+          create: (context) => ChatRepository(context.read<ChatManager>()),
+          update: (context, transport, previous) {
+            final repository = previous ?? ChatRepository(transport);
+            repository.attachTransport(transport);
+            return repository;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(
           create: (_) => NotificationService()..init(),

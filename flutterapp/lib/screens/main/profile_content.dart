@@ -3,6 +3,7 @@ import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/service/api.dart' show getUser;
+import 'package:flutterapp/service/chat_repository.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
@@ -14,6 +15,7 @@ import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class ProfileContent extends StatefulWidget {
   final JWTToken token;
@@ -71,6 +73,8 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
 
   void _logout() {
     SecureStorageService().deleteJWTToken();
+    context.read<ChatRepository>().clear();
+    
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
