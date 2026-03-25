@@ -33,7 +33,8 @@ class AppColors {
   static const success = Color(0xFF14D39A);
   static const error = Color(0xFFFF5A5F);
   static const warning = Color(0xFFFFCF4D);
-  
+  static const info = Color(0xFF2196F3);
+
   // Surface colors with glassmorphism (transparent - legacy)
   static const surface = Color(0x0DFFFFFF); // rgba(255,255,255,0.05)
   static const surfaceDark = Color(0xCC140A23); // rgba(20,10,35,0.80)

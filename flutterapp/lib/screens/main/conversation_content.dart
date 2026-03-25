@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
+import 'package:flutterapp/screens/group_create/select_participants_screen.dart';
 import 'package:flutterapp/screens/search_users_screen.dart';
+import 'package:flutterapp/service/api.dart' show getUser;
 import 'package:flutterapp/service/chat_manager.dart';
-import 'package:flutterapp/service/user.dart';
 import 'package:flutterapp/model/jwttoken.dart';
+import 'package:flutterapp/widgets/common/empty_state.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/error_view.dart';
-import 'package:flutterapp/widgets/common/empty_state.dart';
 import 'package:flutterapp/widgets/common/responsive_container.dart';
 import 'package:flutterapp/widgets/common/theme_toggle_button.dart';
+import 'package:flutterapp/widgets/common/fab_menu.dart';
 import 'package:flutterapp/widgets/conversations/conversation_card.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 
@@ -24,7 +25,8 @@ class ConversationsContent extends StatefulWidget {
   State<ConversationsContent> createState() => _ConversationsContentState();
 }
 
-class _ConversationsContentState extends State<ConversationsContent> with AutomaticKeepAliveClientMixin<ConversationsContent> {
+class _ConversationsContentState extends State<ConversationsContent> 
+    with AutomaticKeepAliveClientMixin<ConversationsContent> {
   User? _user;
   List<ConversationInfo>? _conversations;
   bool _isLoading = false;
@@ -95,6 +97,34 @@ class _ConversationsContentState extends State<ConversationsContent> with Automa
     await _loadConversations();
   }
 
+  void _navigateToSearchUsers() {
+    if (_user == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchUsersScreen(
+          token: widget.token,
+          manager: manager,
+          currentUser: _user!,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToCreateGroup() {
+    if (_user == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectParticipantsScreen(
+          token: widget.token,
+          manager: manager,
+          currentUsername: _user!.username,
+        ),
+      ),
+    );
+  }
+
   Widget _buildContent() {
     if (_conversations == null || _isLoading) {
       return const Padding(
@@ -110,16 +140,7 @@ class _ConversationsContentState extends State<ConversationsContent> with Automa
         message: 'У вас пока нет переписок',
         icon: Icons.chat_bubble_outline,
         buttonText: 'Создать первую',
-        onButtonPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SearchUsersScreen(
-              token: widget.token,
-              manager: manager,
-              currentUser: _user!,
-            ),
-          ),
-        ),
+        onButtonPressed: _navigateToSearchUsers,
       );
     }
     return ListView.builder(
@@ -155,34 +176,34 @@ class _ConversationsContentState extends State<ConversationsContent> with Automa
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
+    
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Мои переписки'),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        // foregroundColor is handled by theme, but ensuring contrast
-        foregroundColor: theme.colorScheme.onSurface, 
+        foregroundColor: theme.colorScheme.onSurface,
         actions: [
           const ThemeToggleButton(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_user == null) return;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => SearchUsersScreen(
-                token: widget.token,
-                manager: manager,
-                currentUser: _user!,
-              ),
-            ),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: FabMenu(
+        items: [
+          FabMenuItem(
+            icon: Icons.person_search,
+            label: 'Найти пользователя',
+            iconColor: AppColors.primary,
+            onTap: _navigateToSearchUsers,
+          ),
+          FabMenuItem(
+            icon: Icons.group_add,
+            label: 'Создать группу',
+            iconColor: AppColors.secondary,
+            onTap: _navigateToCreateGroup,
+          ),
+        ],
+        child: const SizedBox.shrink(),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,

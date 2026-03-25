@@ -9,6 +9,7 @@ class ConversationCard extends StatelessWidget {
   final ConversationInfo info;
   final int currentUserId;
   final VoidCallback onTap;
+
   const ConversationCard({
     super.key,
     required this.info,
@@ -23,6 +24,8 @@ class ConversationCard extends StatelessWidget {
 
     String name = info.getName(currentUserId);
     String? avatarUrl = info.getAvatarUrl(currentUserId);
+    bool isGroup = !info.isDialog;
+
     return MyContainer(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
       borderRadius: AppDimensions.radiusL,
@@ -42,9 +45,27 @@ class ConversationCard extends StatelessWidget {
             ),
           ),
         ),
-        title: Text(
-          name,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        title: Row(
+          children: [
+            if (isGroup) ...[
+              Icon(
+                Icons.group,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Expanded(
+              child: Text(
+                name,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
         subtitle: info.lastMessage != null
             ? Column(

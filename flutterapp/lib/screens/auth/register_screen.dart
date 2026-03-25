@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/screens/main/main_screen.dart';
+import 'package:flutterapp/service/api.dart' show register;
 import 'package:flutterapp/service/notification_service.dart';
-import 'package:flutterapp/service/register.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/utils/responsive.dart';
 import 'package:flutterapp/widgets/auth/auth_field.dart';

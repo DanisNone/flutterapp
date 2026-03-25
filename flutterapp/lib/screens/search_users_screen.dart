@@ -3,7 +3,7 @@ import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_manager.dart';
-import 'package:flutterapp/service/conversations.dart';
+import 'package:flutterapp/service/api.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';

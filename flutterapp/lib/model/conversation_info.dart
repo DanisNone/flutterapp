@@ -6,6 +6,8 @@ class ConversationInfo {
   DateTime lastUpdate;
   String? lastMessage;
   bool isDialog;
+  String? name;
+  String? avatarUrl;
 
   ConversationInfo({
     required this.id,
@@ -13,6 +15,8 @@ class ConversationInfo {
     required this.lastUpdate,
     required this.lastMessage,
     required this.isDialog,
+    required this.name,
+    required this.avatarUrl
   });
 
   factory ConversationInfo.fromJson(Map<String, dynamic> json) {
@@ -25,10 +29,16 @@ class ConversationInfo {
       lastUpdate: DateTime.parse(json['last_update']),
       lastMessage: json['last_message'] as String?,
       isDialog: json['is_dialog'] as bool,
+      name: json['name'] as String?,
+      avatarUrl: json['avatar_url'] as String?
     );
   }
 
   String getName(int currentUserId) {
+    if (name != null && name!.isNotEmpty) {
+      return name!;
+    }
+    
     if (!isDialog || usersInfo.length != 2) {
       return 'Беседа #$id';
     }
@@ -39,7 +49,9 @@ class ConversationInfo {
   }
 
   String? getAvatarUrl(int currentUserId) {
-    if (!isDialog || usersInfo.length != 2) return null;
+    if (!isDialog) return avatarUrl;
+    
+    if (usersInfo.length != 2) return null;
 
     if (usersInfo[0].id == currentUserId) return usersInfo[1].avatarUrl;
     return usersInfo[0].avatarUrl;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/register_screen.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/screens/main/main_screen.dart';
-import 'package:flutterapp/service/login.dart';
+import 'package:flutterapp/service/api.dart' show login;
 import 'package:flutterapp/service/notification_service.dart';
 import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/widgets/auth/auth_field.dart';
