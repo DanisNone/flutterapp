@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -463,33 +464,33 @@ class _ChatScreenState extends State<ChatScreen> {
       padding: const EdgeInsets.all(AppDimensions.paddingL),
       itemCount: visibleMessages.length + (showOlderLoader ? 1 : 0),
       itemBuilder: (context, index) {
-        if (showOlderLoader && index == visibleMessages.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
+          if (showOlderLoader && index == visibleMessages.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
               ),
-            ),
+            );
+          }
+
+          final message = visibleMessages[index];
+          final previousMessage = index < visibleMessages.length - 1 ? visibleMessages[index + 1] : null;
+
+          final showDateHeader = previousMessage == null ||
+              !_isSameDay(previousMessage.createdAt, message.createdAt);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showDateHeader) _buildDateHeader(theme, message.createdAt),
+              _buildMessageItem(theme, index, visibleMessages),
+            ],
           );
         }
-
-        final message = visibleMessages[index];
-        final previousMessage = index < visibleMessages.length - 1 ? visibleMessages[index + 1] : null;
-
-        final showDateHeader = previousMessage == null ||
-            !_isSameDay(previousMessage.createdAt, message.createdAt);
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (showDateHeader) _buildDateHeader(theme, message.createdAt),
-            _buildMessageItem(theme, message),
-          ],
-        );
-      },
     );
   }
 
@@ -515,34 +516,100 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageItem(ThemeData theme, Message message) {
+  Widget _buildMessageItem(ThemeData theme, int index, List<Message> messages) {
+    final message = messages[index];
     final isMine = message.senderId == widget.userId;
-    final isSelected = _selectedMessages.contains(message);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPress: () => _toggleSelection(message),
-      onTap: () => _toggleSelection(message, isTap: true),
-      onSecondaryTap: () => _toggleSelection(message),
-      child: Container(
-        decoration: isSelected
-            ? BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                border: Border.all(
-                  color: theme.colorScheme.primary,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              )
-            : null,
-        child: MessageBubble(
-          isSended: message.id != null,
-          text: message.text,
-          isMine: isMine,
-          timestamp: message.createdAt,
-          readByUsers: _getReadByUsers(message),
-        ),
-      ),
+    final previousMessage =
+        index < messages.length - 1 ? messages[index + 1] : null;
+    final nextMessage = index > 0 ? messages[index - 1] : null;
+
+    final showSenderName =
+        !isMine && (previousMessage == null || previousMessage.senderId != message.senderId);
+
+    final showAvatar =
+        !isMine && (nextMessage == null || nextMessage.senderId != message.senderId);
+
+    final isSelected = _selectedMessages.contains(message);
+    final userInfo = _conversationForCurrentChat()?.userInfoById(message.senderId);
+
+    Widget bubble = MessageBubble(
+      isSended: message.id != null,
+      text: message.text,
+      isMine: isMine,
+      timestamp: message.createdAt,
+      readByUsers: _getReadByUsers(message),
     );
+
+    if (isMine) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: () => _toggleSelection(message),
+        onTap: () => _toggleSelection(message, isTap: true),
+        onSecondaryTap: () => _toggleSelection(message),
+        child: Container(
+          decoration: isSelected
+              ? BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  border: Border.all(
+                    color: theme.colorScheme.primary,
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                )
+              : null,
+          child: bubble,
+        ),
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showSenderName)
+            Padding(
+              padding: const EdgeInsets.only(left: 48, bottom: 4),
+              child: Text(
+                userInfo?.username ?? 'Неизвестный',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onLongPress: () => _toggleSelection(message),
+            onTap: () => _toggleSelection(message, isTap: true),
+            onSecondaryTap: () => _toggleSelection(message),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (showAvatar)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ImageLoader().loadImage(
+                      userInfo?.avatarUrl,
+                      userInfo?.id == 3 ? 64 : 32,
+                      Center(
+                        child: Text(
+                          userInfo != null && userInfo.username.isNotEmpty
+                              ? userInfo.username[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  else SizedBox(width: userInfo?.id == 3 ? 72 : 40),
+                Expanded(child: bubble),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
   }
 }
