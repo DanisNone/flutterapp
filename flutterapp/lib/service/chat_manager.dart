@@ -14,6 +14,7 @@ class ChatListener {
   final void Function(List<Message>)? loadMessages;
   final void Function(List<ConversationInfo>)? conversations;
   final void Function(String query, List<UserInfo> users)? onSearchResult;
+  final void Function(int conversationId, int userId, int lastReadId)? onMessageRead;
   final void Function(dynamic)? error;
 
   ChatListener({
@@ -23,6 +24,7 @@ class ChatListener {
     this.conversations,
     this.onSearchResult,
     this.error,
+    this.onMessageRead
   });
 }
 
@@ -150,6 +152,19 @@ class ChatManager {
     });
   }
 
+  Future<void> markConversationAsRead(
+    int conversationId,
+    int lastMessageReadId,
+  ) {
+    return _sendRequest({
+      "type": "mark_message_as_read",
+      "data": {
+        "conversation_id": conversationId,
+        "last_message_read_id": lastMessageReadId,
+      },
+    });
+  }
+
   void sendMessage(int conversationId, String text) {
     _messagesQueue.add((conversationId: conversationId, text: text));
     unawaited(_ensureConnected());
@@ -221,6 +236,16 @@ class ChatManager {
             );
           }
           break;
+    case "messages_read":
+        final data = Map<String, dynamic>.from(decoded["data"]);
+        final conversationId = data["conversation_id"] as int;
+        final userId = data["user_id"] as int;
+        final lastReadId = data["last_message_read_id"] as int;
+
+        for (final l in _listeners) {
+          l.onMessageRead?.call(conversationId, userId, lastReadId);
+        }
+        break;
       }
     } catch (e) {
       _onError(e);

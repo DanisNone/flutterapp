@@ -25,6 +25,8 @@ class ChatRepository extends ChangeNotifier {
   final Map<int, _ThreadCache> _threads = {};
   final List<ConversationInfo> _conversations = [];
 
+  final Map<int, int> _lastReadSentByConversation = {};
+
   bool _conversationsLoaded = false;
   bool _loadingConversations = false;
   String? _conversationsError;
@@ -53,6 +55,7 @@ class ChatRepository extends ChangeNotifier {
       newMessage: _handleIncomingMessage,
       loadMessages: _handleLoadedMessages,
       conversations: _handleConversations,
+      onMessageRead: _handleMessageRead,
       error: _handleTransportError,
     );
     _transport!.addListener(_listener!);
@@ -67,6 +70,7 @@ class ChatRepository extends ChangeNotifier {
   void clear() {
     _threads.clear();
     _conversations.clear();
+    _lastReadSentByConversation.clear();
     _conversationsLoaded = false;
     _loadingConversations = false;
     _conversationsError = null;
@@ -195,6 +199,31 @@ class ChatRepository extends ChangeNotifier {
 
     notifyListeners();
     _transport?.sendMessage(conversationId, trimmed);
+  }
+
+  void markConversationAsRead(int conversationId, int lastMessageReadId) {
+    if (lastMessageReadId <= 0) return;
+
+    final prev = _lastReadSentByConversation[conversationId];
+    if (prev != null && lastMessageReadId <= prev) return;
+
+    _lastReadSentByConversation[conversationId] = lastMessageReadId;
+    _transport?.markConversationAsRead(conversationId, lastMessageReadId);
+  }
+
+  void _handleMessageRead(int conversationId, int userId, int lastReadId) {
+    final convIndex = _conversations.indexWhere((c) => c.id == conversationId);
+    if (convIndex == -1) return;
+
+    final conv = _conversations[convIndex];
+
+    final user = conv.userInfoById(userId);
+    if (user == null) return;
+
+    if (user.lastMessageReadId < lastReadId) {
+      user.lastMessageReadId = lastReadId;
+      notifyListeners();
+    }
   }
 
   void _handleConnectionChanged(bool connected) {

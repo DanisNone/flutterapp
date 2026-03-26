@@ -157,18 +157,21 @@ class _ConversationsContentState extends State<ConversationsContent>
         return ConversationCard(
           info: info,
           currentUserId: _user!.id,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(
-                  conversationId: id,
-                  userId: _user!.id,
-                  chatName: info.getName(_user!.id),
-                  token: widget.token
+            onTap: () {
+              final myInfo = info.userInfoById(_user!.id);
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChatScreen(
+                    conversationId: id,
+                    userId: _user!.id,
+                    chatName: info.getName(_user!.id),
+                    token: widget.token,
+                    initialMessageReadId: myInfo?.lastMessageReadId,
+                  ),
                 ),
-              ),
-            );
+              );
           },
         );
       },

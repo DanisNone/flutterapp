@@ -1,3 +1,4 @@
+import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user_info.dart';
 
 class ConversationInfo {
@@ -34,11 +35,44 @@ class ConversationInfo {
     );
   }
 
+  UserInfo? userInfoById(int userId) {
+    for (final user in usersInfo) {
+      if (user.id == userId) return user;
+    }
+    return null;
+  }
+
+  List<UserInfo> otherUsers(int currentUserId) {
+    return usersInfo.where((u) => u.id != currentUserId).toList();
+  }
+
+  int readByOthersCount(Message message, int currentUserId) {
+    final messageId = message.id;
+    if (messageId == null) return 0;
+
+    return otherUsers(currentUserId)
+        .where((u) => u.lastMessageReadId >= messageId)
+        .length;
+  }
+
+  bool isReadByOthers(Message message, int currentUserId) {
+    return readByOthersCount(message, currentUserId) > 0;
+  }
+
+  List<UserInfo> readByUsers(Message message, int currentUserId) {
+    final messageId = message.id;
+    if (messageId == null) return <UserInfo>[];
+
+    return usersInfo
+        .where((u) => u.id != currentUserId && u.lastMessageReadId >= messageId)
+        .toList();
+  }
+
   String getName(int currentUserId) {
     if (name != null && name!.isNotEmpty) {
       return name!;
     }
-    
+
     if (!isDialog || usersInfo.length != 2) {
       return 'Беседа #$id';
     }

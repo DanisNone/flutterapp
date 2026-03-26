@@ -1,31 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
+import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/model/chat_thread_state.dart';
+import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/message.dart';
+import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_repository.dart';
-import 'package:flutterapp/widgets/common/empty_state.dart';
-import 'package:flutterapp/widgets/common/loading_indicator.dart';
-import 'package:flutterapp/widgets/common/error_view.dart';
-import 'package:flutterapp/widgets/chat/message_bubble.dart';
-import 'package:flutterapp/widgets/chat/chat_input.dart';
 import 'package:flutterapp/theme/app_theme.dart';
+import 'package:flutterapp/widgets/chat/chat_input.dart';
+import 'package:flutterapp/widgets/chat/message_bubble.dart';
+import 'package:flutterapp/widgets/common/empty_state.dart';
+import 'package:flutterapp/widgets/common/error_view.dart';
+import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
-import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:provider/provider.dart';
 
 class ChatScreen extends StatefulWidget {
   final int conversationId;
   final int userId;
   final String chatName;
   final JWTToken token;
+  final int? initialMessageReadId;
 
   const ChatScreen({
     super.key,
     required this.conversationId,
     required this.chatName,
     required this.userId,
-    required this.token
+    required this.token,
+    this.initialMessageReadId,
   });
 
   @override
@@ -37,17 +43,21 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _initialized = false;
 
   final TextEditingController _controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
+
   final Set<Message> _selectedMessages = {};
 
   bool _isSelectionMode = false;
-  bool _initialScrollScheduled = false;
+  bool _initialPositionRestored = false;
+  bool _isRestoringInitialPosition = false;
   bool _paginationArmed = true;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    _itemPositionsListener.itemPositions.addListener(_onItemPositionsChanged);
   }
 
   @override
@@ -62,27 +72,149 @@ class _ChatScreenState extends State<ChatScreen> {
     _repository.ensureThreadLoaded(widget.conversationId);
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
+  @override
+  void dispose() {
+    _itemPositionsListener.itemPositions.removeListener(_onItemPositionsChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onItemPositionsChanged() {
+    if (_isRestoringInitialPosition) return;
 
     final thread = _repository.threadFor(widget.conversationId);
-    if (thread == null || !thread.canLoadOlder) {
+    if (thread == null) return;
+
+    _handlePagination(thread);
+    _syncReadReceipt(thread);
+  }
+
+  void _handlePagination(ChatThreadState thread) {
+    if (!thread.canLoadOlder || thread.loadingOlder) {
       _paginationArmed = true;
       return;
     }
 
-    final nearTop = _scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 50;
+    final visibleCount = _visibleMessages(thread).length;
+    if (visibleCount == 0) return;
+
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty) return;
+
+    int maxVisibleIndex = -1;
+    for (final pos in positions) {
+      if (pos.index > maxVisibleIndex) maxVisibleIndex = pos.index;
+    }
+
+    // reverse: true => "older" messages are near the top of the screen,
+    // that corresponds to larger indices in the visible list.
+    final nearTop = maxVisibleIndex >= visibleCount - 3;
 
     if (!nearTop) {
       _paginationArmed = true;
       return;
     }
 
-    if (!_paginationArmed) return;
+    if (_paginationArmed) {
+      _paginationArmed = false;
+      _repository.loadOlder(widget.conversationId);
+    }
+  }
 
-    _paginationArmed = false;
-    _repository.loadOlder(widget.conversationId);
+  void _syncReadReceipt(ChatThreadState thread) {
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty) return;
+
+    int minVisibleIndex = 1 << 30;
+
+    for (final pos in positions) {
+      if (pos.index < minVisibleIndex) {
+        minVisibleIndex = pos.index;
+      }
+    }
+
+    final visibleMessages = _visibleMessages(thread);
+
+    if (minVisibleIndex >= visibleMessages.length) return;
+
+    final message = visibleMessages[minVisibleIndex];
+
+    if (message.id == null) return;
+ 
+    _repository.markConversationAsRead(
+      widget.conversationId,
+      message.id!,
+    );
+  }
+
+  List<Message> _visibleMessages(ChatThreadState thread) {
+    return thread.messages.reversed.toList(growable: false);
+  }
+
+  Future<void> _restoreInitialPosition() async {
+    if (_initialPositionRestored || !mounted) return;
+    _initialPositionRestored = true;
+    _isRestoringInitialPosition = true;
+
+    try {
+      final targetId = widget.initialMessageReadId;
+      final thread = _repository.threadFor(widget.conversationId);
+
+      if (thread == null || thread.messages.isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+
+      var currentThread = _repository.threadFor(widget.conversationId);
+      if (currentThread == null || currentThread.messages.isEmpty) {
+        _scrollToBottom();
+        return;
+      }
+
+      if (targetId == null) {
+        _scrollToBottom();
+        return;
+      }
+
+      while (currentThread != null) {
+        final visibleMessages = _visibleMessages(currentThread);
+        final targetIndex =
+            visibleMessages.indexWhere((message) => message.id == targetId);
+
+        if (targetIndex != -1) {
+          await Future<void>.delayed(Duration.zero);
+
+          if (_itemScrollController.isAttached) {
+            await _itemScrollController.scrollTo(
+              index: targetIndex,
+              alignment: 0.25,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+            );
+          }
+
+          return;
+        }
+
+        if (!currentThread.canLoadOlder) break;
+
+        await Future.sync(() => _repository.loadOlder(widget.conversationId));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        currentThread = _repository.threadFor(widget.conversationId);
+      }
+
+      _scrollToBottom();
+    } finally {
+      _isRestoringInitialPosition = false;
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (!_itemScrollController.isAttached) return;
+
+      _itemScrollController.jumpTo(index: 0);
+    });
   }
 
   void _sendMessage() {
@@ -106,13 +238,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _controller.clear();
     _scrollToBottom();
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      _scrollController.jumpTo(_scrollController.position.minScrollExtent);
-    });
   }
 
   void _toggleSelection(Message message, {bool isTap = false}) {
@@ -165,12 +290,38 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
+  ConversationInfo? _conversationForCurrentChat() {
+    for (final c in _repository.conversations) {
+      if (c.id == widget.conversationId) return c;
+    }
+    return null;
+  }
+
+  List<UserInfo> _getReadByUsers(Message message) {
+    final conversation = _conversationForCurrentChat();
+    return conversation?.readByUsers(message, widget.userId) ?? <UserInfo>[];
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    final la = a.toLocal();
+    final lb = b.toLocal();
+    return la.year == lb.year && la.month == lb.month && la.day == lb.day;
+  }
+
+  String _formatDate(DateTime date) {
+    date = date.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    if (messageDate == today) return 'Сегодня';
+    if (messageDate == today.subtract(const Duration(days: 1))) {
+      return 'Вчера';
+    }
+
+    return '${date.day.toString().padLeft(2, '0')}.'
+        '${date.month.toString().padLeft(2, '0')}.'
+        '${date.year}';
   }
 
   @override
@@ -179,12 +330,10 @@ class _ChatScreenState extends State<ChatScreen> {
     final repo = context.watch<ChatRepository>();
     final thread = repo.threadFor(widget.conversationId);
 
-    if (!_initialScrollScheduled && thread?.messages.isNotEmpty == true) {
-      _initialScrollScheduled = true;
+    if (!_initialPositionRestored && thread?.messages.isNotEmpty == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _scrollToBottom();
-        }
+        if (!mounted) return;
+        _restoreInitialPosition();
       });
     }
 
@@ -303,17 +452,18 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
-    final messages = thread.messages;
+    final visibleMessages = _visibleMessages(thread);
     final showOlderLoader = thread.loadingOlder;
 
-    return ListView.builder(
-      controller: _scrollController,
+    return ScrollablePositionedList.builder(
+      itemScrollController: _itemScrollController,
+      itemPositionsListener: _itemPositionsListener,
       reverse: true,
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      //keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.all(AppDimensions.paddingL),
-      itemCount: messages.length + (showOlderLoader ? 1 : 0),
+      itemCount: visibleMessages.length + (showOlderLoader ? 1 : 0),
       itemBuilder: (context, index) {
-        if (showOlderLoader && index == messages.length) {
+        if (showOlderLoader && index == visibleMessages.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Center(
@@ -326,10 +476,8 @@ class _ChatScreenState extends State<ChatScreen> {
           );
         }
 
-        final message = messages[messages.length - 1 - index];
-        final previousMessage = index < messages.length - 1
-            ? messages[messages.length - index - 2]
-            : null;
+        final message = visibleMessages[index];
+        final previousMessage = index < visibleMessages.length - 1 ? visibleMessages[index + 1] : null;
 
         final showDateHeader = previousMessage == null ||
             !_isSameDay(previousMessage.createdAt, message.createdAt);
@@ -392,28 +540,9 @@ class _ChatScreenState extends State<ChatScreen> {
           text: message.text,
           isMine: isMine,
           timestamp: message.createdAt,
+          readByUsers: _getReadByUsers(message),
         ),
       ),
     );
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    final la = a.toLocal();
-    final lb = b.toLocal();
-    return la.year == lb.year && la.month == lb.month && la.day == lb.day;
-  }
-
-  String _formatDate(DateTime date) {
-    date = date.toLocal();
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final messageDate = DateTime(date.year, date.month, date.day);
-
-    if (messageDate == today) return 'Сегодня';
-    if (messageDate == today.subtract(const Duration(days: 1))) return 'Вчера';
-
-    return '${date.day.toString().padLeft(2, '0')}.'
-        '${date.month.toString().padLeft(2, '0')}.'
-        '${date.year}';
   }
 }
