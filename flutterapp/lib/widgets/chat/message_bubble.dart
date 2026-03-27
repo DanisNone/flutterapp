@@ -9,6 +9,7 @@ class MessageBubble extends StatelessWidget {
   final bool isMine;
   final DateTime timestamp;
   final List<UserInfo> readByUsers;
+  final bool showReaded;
 
   const MessageBubble({
     super.key,
@@ -17,6 +18,7 @@ class MessageBubble extends StatelessWidget {
     required this.isMine,
     required this.timestamp,
     required this.readByUsers,
+    required this.showReaded
   });
 
   @override
@@ -86,7 +88,7 @@ class MessageBubble extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (canOpenReaders) ...[
+                  if (canOpenReaders && showReaded) ...[
                     const SizedBox(width: 6),
                     InkWell(
                       borderRadius: BorderRadius.circular(999),

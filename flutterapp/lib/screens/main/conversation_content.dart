@@ -3,7 +3,7 @@ import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
 import 'package:flutterapp/screens/group_create/select_participants_screen.dart';
 import 'package:flutterapp/screens/search_users_screen.dart';
-import 'package:flutterapp/service/api.dart' show getUser;
+import 'package:flutterapp/service/api.dart' show getOrCreateSaved, getUser;
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/chat_repository.dart';
 import 'package:flutterapp/model/jwttoken.dart';
@@ -74,6 +74,36 @@ class _ConversationsContentState extends State<ConversationsContent>
   Future<void> _refresh() async {
     final repo = context.read<ChatRepository>();
     await repo.loadConversations(force: true);
+  }
+
+  Future<void> _openSavedMessages() async {
+    if (_user == null) return;
+
+
+    try {
+      final (conversationId, exists) = await getOrCreateSaved(
+        _user!,
+        widget.token
+      );
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            conversationId: conversationId,
+            userId: _user!.id,
+            chatName: 'Избранное',
+            token: widget.token,
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: $e')),
+      );
+    }
   }
 
   void _navigateToSearchUsers() {
@@ -208,6 +238,12 @@ class _ConversationsContentState extends State<ConversationsContent>
             label: 'Создать группу',
             iconColor: AppColors.secondary,
             onTap: _navigateToCreateGroup,
+          ),
+          FabMenuItem(
+            icon: Icons.bookmark,
+            label: 'Избранное',
+            iconColor: Colors.amber,
+            onTap: _openSavedMessages,
           ),
         ],
         child: const SizedBox.shrink(),

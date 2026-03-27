@@ -11,6 +11,7 @@ const String usersUrl = "$apiV1/users";
 const String searchUsersUrl = "$apiV1/users/search";
 const String getConversationsUrl = "$apiV1/get_conversations";
 String getOrCreateDialogUrl(String userName) => "$apiV1/get_or_create_dialog/${Uri.encodeComponent(userName)}";
+String getOrCreateSavedUrl = "$apiV1/get_or_create_saved";
 
 const String createConversationUrl = "$apiV1/create_group_conversation";
 // String addUserToConversationUrl(int conversationId, String userName) 

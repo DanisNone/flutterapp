@@ -25,6 +25,24 @@ Future<(int, bool)> getOrCreateDialog(
 }
 
 
+Future<(int, bool)> getOrCreateSaved(
+  User user,
+  JWTToken token,
+) async {
+  await token.updateToken();
+  final response = await http.get(
+    Uri.parse(getOrCreateSavedUrl),
+    headers: {"Authorization": token.toHeaderValue()},
+  );
+  final Map<String, dynamic> data = json.decode(response.body);
+  if (response.statusCode == 200) {
+    return (data["id"] as int, data["already_exists"] as bool);
+  }
+  throw Exception(
+    'Failed to create saved: ${response.statusCode}; ${data["detail"]}',
+  );
+}
+
 
 Future<User> getUser(JWTToken token) async {
   await token.updateToken();

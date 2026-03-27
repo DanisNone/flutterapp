@@ -1,12 +1,17 @@
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user_info.dart';
 
+enum ChatType {
+  group, dialog, saved
+}
+
+
 class ConversationInfo {
   final int id;
   final List<UserInfo> usersInfo;
   DateTime lastUpdate;
   String? lastMessage;
-  bool isDialog;
+  ChatType chatType;
   String? name;
   String? avatarUrl;
 
@@ -15,7 +20,7 @@ class ConversationInfo {
     required this.usersInfo,
     required this.lastUpdate,
     required this.lastMessage,
-    required this.isDialog,
+    required this.chatType,
     required this.name,
     required this.avatarUrl
   });
@@ -29,7 +34,7 @@ class ConversationInfo {
       usersInfo: usersInfo,
       lastUpdate: DateTime.parse(json['last_update']),
       lastMessage: json['last_message'] as String?,
-      isDialog: json['is_dialog'] as bool,
+      chatType: ChatType.values.byName(json['chat_type']),
       name: json['name'] as String?,
       avatarUrl: json['avatar_url'] as String?
     );
@@ -69,25 +74,26 @@ class ConversationInfo {
   }
 
   String getName(int currentUserId) {
-    if (name != null && name!.isNotEmpty) {
-      return name!;
+    const String error = 'Internel Error';
+    switch (chatType) {
+      case ChatType.saved:
+        return "Избранное";
+      case ChatType.dialog:
+        if (usersInfo.length != 2) return error;
+        if (usersInfo[0].id == currentUserId) return usersInfo[1].username;
+        return usersInfo[0].username;
+      case ChatType.group:
+        return name ?? error;
     }
-
-    if (!isDialog || usersInfo.length != 2) {
-      return 'Беседа #$id';
-    }
-    if (usersInfo[0].id == currentUserId) {
-      return usersInfo[1].username;
-    }
-    return usersInfo[0].username;
   }
 
   String? getAvatarUrl(int currentUserId) {
-    if (!isDialog) return avatarUrl;
-    
-    if (usersInfo.length != 2) return null;
-
-    if (usersInfo[0].id == currentUserId) return usersInfo[1].avatarUrl;
-    return usersInfo[0].avatarUrl;
+    switch (chatType) {
+      case ChatType.saved: return usersInfo[0].avatarUrl;
+      case ChatType.dialog:
+        if (usersInfo[0].id == currentUserId)return usersInfo[1].avatarUrl;
+        return usersInfo[0].avatarUrl;
+      case ChatType.group: return avatarUrl;
+    }
   }
 }

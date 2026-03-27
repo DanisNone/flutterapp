@@ -531,7 +531,8 @@ class _ChatScreenState extends State<ChatScreen> {
         !isMine && (nextMessage == null || nextMessage.senderId != message.senderId);
 
     final isSelected = _selectedMessages.contains(message);
-    final userInfo = _conversationForCurrentChat()?.userInfoById(message.senderId);
+    final conv = _conversationForCurrentChat();
+    final userInfo = conv?.userInfoById(message.senderId);
 
     Widget bubble = MessageBubble(
       isSended: message.id != null,
@@ -539,6 +540,7 @@ class _ChatScreenState extends State<ChatScreen> {
       isMine: isMine,
       timestamp: message.createdAt,
       readByUsers: _getReadByUsers(message),
+      showReaded: conv?.chatType != ChatType.saved,
     );
 
     if (isMine) {

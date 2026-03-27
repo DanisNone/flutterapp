@@ -22,9 +22,22 @@ class ConversationCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    String name = info.getName(currentUserId);
-    String? avatarUrl = info.getAvatarUrl(currentUserId);
-    bool isGroup = !info.isDialog;
+    final chatType = info.chatType;
+
+    String name;
+    String? avatarUrl;
+
+    switch (chatType) {
+      case ChatType.saved:
+        name = 'Избранное';
+        avatarUrl = null;
+        break;
+      case ChatType.group:
+      case ChatType.dialog:
+        name = info.getName(currentUserId);
+        avatarUrl = info.getAvatarUrl(currentUserId);
+        break;
+    }
 
     return MyContainer(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
@@ -32,22 +45,41 @@ class ConversationCard extends StatelessWidget {
       opacity: 0.04,
       child: ListTile(
         contentPadding: const EdgeInsets.all(AppDimensions.paddingM),
-        leading: ImageLoader().loadImage(
-          avatarUrl,
-          48,
-          Center(
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '#',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: isDark ? Colors.white : AppColors.primaryDark,
-                fontWeight: FontWeight.bold,
+
+        // === LEADING ===
+        leading: chatType == ChatType.saved
+            ? Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.secondary,
+                    ],
+                  ),
+                ),
+                child: const Icon(Icons.bookmark, color: Colors.white),
+              )
+            : ImageLoader().loadImage(
+                avatarUrl,
+                48,
+                Center(
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '#',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: isDark ? Colors.white : AppColors.primaryDark,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
+
+        // === TITLE ===
         title: Row(
           children: [
-            if (isGroup) ...[
+            if (chatType == ChatType.group) ...[
               Icon(
                 Icons.group,
                 size: 16,
@@ -67,6 +99,8 @@ class ConversationCard extends StatelessWidget {
             ),
           ],
         ),
+
+        // === SUBTITLE ===
         subtitle: info.lastMessage != null
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +118,8 @@ class ConversationCard extends StatelessWidget {
                   Text(
                     _formatTime(info.lastUpdate),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color: theme.colorScheme.onSurfaceVariant
+                          .withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -92,9 +127,12 @@ class ConversationCard extends StatelessWidget {
             : Text(
                 'Нет сообщений',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: theme.colorScheme.onSurfaceVariant
+                      .withValues(alpha: 0.5),
                 ),
               ),
+
+        // === TRAILING ===
         trailing: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -110,8 +148,10 @@ class ConversationCard extends StatelessWidget {
               width: 1,
             ),
           ),
-          child: Icon(Icons.chevron_right, color: theme.colorScheme.primary),
+          child:
+              Icon(Icons.chevron_right, color: theme.colorScheme.primary),
         ),
+
         onTap: onTap,
       ),
     );
@@ -120,6 +160,7 @@ class ConversationCard extends StatelessWidget {
   String _formatTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
+
     if (difference.inDays > 0) {
       return '${difference.inDays} дн. назад';
     } else if (difference.inHours > 0) {
