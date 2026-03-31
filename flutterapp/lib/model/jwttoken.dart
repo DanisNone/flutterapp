@@ -7,6 +7,7 @@ class JWTToken {
   String accessToken;
   String refreshToken;
   String tokenType;
+  DateTime? _lastUpdate;
 
   JWTToken({
     required this.accessToken,
@@ -39,16 +40,22 @@ class JWTToken {
   }
 
   Future<bool> updateToken() async {
+    print("$_lastUpdate, ${DateTime.now()}");
+    if (_lastUpdate != null && _lastUpdate!.add(Duration(minutes: 15)).isAfter(DateTime.now())) {
+      return true;
+    }
     final res = await http.post(
       Uri.parse(refreshUrl),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({"refresh_token": refreshToken}),
     );
+    print(res.body);
     if (res.statusCode == 200) {
       final token = JWTToken.fromRawJson(res.body);
       accessToken = token.accessToken;
       refreshToken = token.refreshToken;
       tokenType = token.tokenType;
+      _lastUpdate = DateTime.now();
       return true;
     }
     return false;
