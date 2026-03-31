@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
@@ -12,13 +11,11 @@ import 'package:flutterapp/widgets/common/responsive_container.dart';
 import 'package:flutterapp/screens/group_create/create_group_details_screen.dart';
 
 class SelectParticipantsScreen extends StatefulWidget {
-  final JWTToken token;
   final ChatManager manager;
   final String currentUsername;
 
   const SelectParticipantsScreen({
     super.key,
-    required this.token,
     required this.manager,
     required this.currentUsername,
   });
@@ -134,7 +131,6 @@ class _SelectParticipantsScreenState extends State<SelectParticipantsScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => CreateGroupDetailsScreen(
-          token: widget.token,
           manager: widget.manager,
           currentUsername: widget.currentUsername,
           selectedUsers: _selectedUsers,

@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutterapp/model/chat_thread_state.dart';
 import 'package:flutterapp/model/conversation_info.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 
@@ -18,7 +17,6 @@ class ChatRepository extends ChangeNotifier {
 
   ChatManager? _transport;
   ChatListener? _listener;
-  JWTToken? _token;
 
   bool _isConnected = false;
 
@@ -60,11 +58,6 @@ class ChatRepository extends ChangeNotifier {
     );
     _transport!.addListener(_listener!);
     _isConnected = _transport!.isConnected;
-  }
-
-  void setToken(JWTToken token) {
-    _token = token;
-    _transport?.setToken(token);
   }
 
   void clear() {

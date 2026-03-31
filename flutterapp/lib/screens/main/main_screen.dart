@@ -21,8 +21,8 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
-    _pages.add(ConversationsContent(token: widget.token));
-    _pages.add(ProfileContent(token: widget.token));
+    _pages.add(ConversationsContent());
+    _pages.add(ProfileContent());
   }
 
   @override

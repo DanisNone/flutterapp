@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/routes/all_routes.dart';
+import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:http/http.dart' as http;
 
 Future<(int, bool)> getOrCreateDialog(
   User user,
-  String otherUsername,
-  JWTToken token,
+  String otherUsername
 ) async {
-  await token.updateToken();
+  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
   final response = await http.get(
     Uri.parse(getOrCreateDialogUrl(otherUsername)),
     headers: {"Authorization": token.toHeaderValue()},
@@ -27,9 +27,8 @@ Future<(int, bool)> getOrCreateDialog(
 
 Future<(int, bool)> getOrCreateSaved(
   User user,
-  JWTToken token,
 ) async {
-  await token.updateToken();
+  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
   final response = await http.get(
     Uri.parse(getOrCreateSavedUrl),
     headers: {"Authorization": token.toHeaderValue()},
@@ -44,8 +43,8 @@ Future<(int, bool)> getOrCreateSaved(
 }
 
 
-Future<User> getUser(JWTToken token) async {
-  await token.updateToken();
+Future<User> getMe() async {
+  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
   final res = await http.get(
     Uri.parse(meUrl),
     headers: {"Authorization": token.toHeaderValue()},
@@ -59,11 +58,10 @@ Future<User> getUser(JWTToken token) async {
 }
 
 Future<List<User>> searchUsers(
-  JWTToken token,
   String query, {
   int limit = 20,
 }) async {
-  await token.updateToken();
+  JWTToken? token = await JWTTokenManager().getJWTToken(update: true);
   final uri = Uri.parse(
     searchUsersUrl,
   ).replace(queryParameters: {"q": query, "limit": limit.toString()});
@@ -111,7 +109,9 @@ Future<JWTToken> register(
         )
         .timeout(const Duration(seconds: 10));
     if (res.statusCode == 200 || res.statusCode == 201) {
-      return JWTToken.fromRawJson(res.body);
+      JWTToken token = JWTToken.fromRawJson(res.body);
+      await JWTTokenManager().saveJWTToken(token);
+      return token;
     } else {
       dynamic errorData;
       try {
@@ -136,7 +136,9 @@ Future<JWTToken> login(String email, String password, String? fcmToken) async {
   );
 
   if (res.statusCode == 200) {
-    return JWTToken.fromRawJson(res.body);
+    JWTToken token = JWTToken.fromRawJson(res.body);
+    await JWTTokenManager().saveJWTToken(token);
+    return token;
   } else {
     throw Exception('Ошибка входа: ${res.statusCode} ${res.body}');
   }

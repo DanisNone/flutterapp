@@ -3,10 +3,9 @@ import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
 import 'package:flutterapp/screens/group_create/select_participants_screen.dart';
 import 'package:flutterapp/screens/search_users_screen.dart';
-import 'package:flutterapp/service/api.dart' show getOrCreateSaved, getUser;
+import 'package:flutterapp/service/api.dart' show getOrCreateSaved, getMe;
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/chat_repository.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/widgets/common/empty_state.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/error_view.dart';
@@ -18,8 +17,7 @@ import 'package:flutterapp/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 
 class ConversationsContent extends StatefulWidget {
-  final JWTToken token;
-  const ConversationsContent({super.key, required this.token});
+  const ConversationsContent({super.key});
 
   @override
   State<ConversationsContent> createState() => _ConversationsContentState();
@@ -46,7 +44,6 @@ class _ConversationsContentState extends State<ConversationsContent>
     _initialized = true;
 
     final repo = context.read<ChatRepository>();
-    repo.setToken(widget.token);
 
     if (!repo.conversationsLoaded) {
       repo.loadConversations();
@@ -55,7 +52,7 @@ class _ConversationsContentState extends State<ConversationsContent>
 
   Future<void> _loadCurrentUser() async {
     try {
-      final user = await getUser(widget.token);
+      final user = await getMe();
       if (!mounted) return;
       setState(() {
         _user = user;
@@ -81,10 +78,7 @@ class _ConversationsContentState extends State<ConversationsContent>
 
 
     try {
-      final (conversationId, exists) = await getOrCreateSaved(
-        _user!,
-        widget.token
-      );
+      final (conversationId, exists) = await getOrCreateSaved(_user!);
 
       if (!mounted) return;
 
@@ -94,8 +88,7 @@ class _ConversationsContentState extends State<ConversationsContent>
           builder: (_) => ChatScreen(
             conversationId: conversationId,
             userId: _user!.id,
-            chatName: 'Избранное',
-            token: widget.token,
+            chatName: 'Избранное'
           ),
         ),
       );
@@ -113,7 +106,6 @@ class _ConversationsContentState extends State<ConversationsContent>
       context,
       MaterialPageRoute(
         builder: (_) => SearchUsersScreen(
-          token: widget.token,
           manager: context.read<ChatManager>(),
           currentUser: _user!,
         ),
@@ -128,7 +120,6 @@ class _ConversationsContentState extends State<ConversationsContent>
       context,
       MaterialPageRoute(
         builder: (_) => SelectParticipantsScreen(
-          token: widget.token,
           manager: context.read<ChatManager>(),
           currentUsername: _user!.username,
         ),
@@ -197,7 +188,6 @@ class _ConversationsContentState extends State<ConversationsContent>
                     conversationId: id,
                     userId: _user!.id,
                     chatName: info.getName(_user!.id),
-                    token: widget.token,
                     initialMessageReadId: myInfo?.lastMessageReadId,
                   ),
                 ),

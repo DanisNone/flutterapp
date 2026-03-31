@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/model/user.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
-import 'package:flutterapp/service/api.dart' show getUser;
+import 'package:flutterapp/service/api.dart' show getMe;
 import 'package:flutterapp/service/chat_repository.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
-import 'package:flutterapp/service/secure_storage.dart';
+import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/error_view.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
@@ -18,8 +17,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class ProfileContent extends StatefulWidget {
-  final JWTToken token;
-  const ProfileContent({super.key, required this.token});
+  const ProfileContent({super.key});
 
   @override
   State<ProfileContent> createState() => _ProfileContentState();
@@ -45,7 +43,7 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
       _errorMessage = null;
     });
     try {
-      final user = await getUser(widget.token);
+      final user = await getMe();
       if (!mounted) return;
       setState(() {
         _user = user;
@@ -72,7 +70,7 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
   }
 
   void _logout() {
-    SecureStorageService().deleteJWTToken();
+    JWTTokenManager().deleteJWTToken();
     context.read<ChatRepository>().clear();
     
     Navigator.pushAndRemoveUntil(

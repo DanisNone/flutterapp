@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_manager.dart';
@@ -13,12 +12,10 @@ import 'package:flutterapp/widgets/common/responsive_container.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
 
 class SearchUsersScreen extends StatefulWidget {
-  final JWTToken token;
   final ChatManager manager;
   final User currentUser;
   const SearchUsersScreen({
     super.key,
-    required this.token,
     required this.manager,
     required this.currentUser,
   });
@@ -101,8 +98,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
       );
       final (conversationId, alreadyExists) = await getOrCreateDialog(
         widget.currentUser,
-        otherUser.username,
-        widget.token,
+        otherUser.username
       );
       if (!mounted) return;
       Navigator.pop(context);
@@ -113,8 +109,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
           builder: (_) => ChatScreen(
             conversationId: conversationId,
             userId: widget.currentUser.id,
-            chatName: otherUser.username,
-            token: widget.token
+            chatName: otherUser.username
           ),
         ),
       );

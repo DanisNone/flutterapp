@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/routes/all_routes.dart';
+import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:http/http.dart' as http;
 
 class ConversationService {
   static Future<int> createConversation({
-    required JWTToken token,
     required String name,
     required List<String> usernames,
   }) async {
-    await token.updateToken();
+    JWTToken token = await JWTTokenManager().getJWTToken(update: true);
     
     final response = await http.post(
       Uri.parse(createConversationUrl),
@@ -33,11 +33,10 @@ class ConversationService {
   }
 
   static Future<void> addUserToConversation(
-    JWTToken token,
     int conversationId,
     int userId,
   ) async {
-    await token.updateToken();
+    // JWTToken token = await JWTTokenManager().getJWTToken(update: true);
     throw Exception("not implemented");
     /*
     final response = await http.post(
@@ -55,11 +54,10 @@ class ConversationService {
   }
 
   static Future<void> removeUserFromConversation(
-    JWTToken token,
     int conversationId,
     int userId,
   ) async {
-    await token.updateToken();
+    // JWTToken token = await JWTTokenManager().getJWTToken(update: true);
     throw Exception("not implemented");
     /*
     final response = await http.delete(

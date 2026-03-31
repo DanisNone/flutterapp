@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/register_screen.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/screens/main/main_screen.dart';
 import 'package:flutterapp/service/api.dart' show login;
+import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:flutterapp/service/notification_service.dart';
-import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/widgets/auth/auth_field.dart';
 import 'package:flutterapp/utils/responsive.dart';
 import 'package:flutterapp/theme/app_theme.dart';
@@ -34,8 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkExistingToken() async {
     setState(() => _isCheckingToken = true);
     try {
-      final JWTToken? token = await SecureStorageService().getJWTToken();
-      if (token != null && await token.updateToken()) {
+      final manager = JWTTokenManager();
+      final token = await manager.getJWTToken();
+      if (await manager.updateToken()) {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
         fcmToken
       );
-      await SecureStorageService().saveJWTToken(token);
+      await JWTTokenManager().saveJWTToken(token);
       if (!mounted) return;
       Navigator.pushReplacement(
         context,

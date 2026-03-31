@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
 import 'package:flutterapp/screens/main/main_screen.dart';
 import 'package:flutterapp/service/api.dart' show register;
+import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:flutterapp/service/notification_service.dart';
-import 'package:flutterapp/service/secure_storage.dart';
 import 'package:flutterapp/utils/responsive.dart';
 import 'package:flutterapp/widgets/auth/auth_field.dart';
 import 'package:flutterapp/theme/app_theme.dart';
@@ -50,7 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _confirmPasswordController.text,
         fcmToken
       );
-      await SecureStorageService().saveJWTToken(token);
+      await JWTTokenManager().saveJWTToken(token);
       if (!mounted) return;
       Navigator.pushReplacement(
         context,

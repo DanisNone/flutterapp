@@ -7,7 +7,6 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/model/chat_thread_state.dart';
 import 'package:flutterapp/model/conversation_info.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_repository.dart';
@@ -23,7 +22,6 @@ class ChatScreen extends StatefulWidget {
   final int conversationId;
   final int userId;
   final String chatName;
-  final JWTToken token;
   final int? initialMessageReadId;
 
   const ChatScreen({
@@ -31,7 +29,6 @@ class ChatScreen extends StatefulWidget {
     required this.conversationId,
     required this.chatName,
     required this.userId,
-    required this.token,
     this.initialMessageReadId,
   });
 
@@ -69,7 +66,6 @@ class _ChatScreenState extends State<ChatScreen> {
     _initialized = true;
 
     _repository = context.read<ChatRepository>();
-    _repository.setToken(widget.token);
     _repository.ensureThreadLoaded(widget.conversationId);
   }
 

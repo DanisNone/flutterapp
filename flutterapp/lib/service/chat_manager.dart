@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutterapp/model/conversation_info.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/routes/all_routes.dart';
+import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatListener {
@@ -36,7 +36,6 @@ class ChatManager {
   StreamSubscription? _channelSubscription;
   bool _isConnected = false;
 
-  JWTToken? _token;
   final List<ChatListener> _listeners = [];
 
   Timer? _reconnectTimer;
@@ -48,20 +47,7 @@ class ChatManager {
 
   bool get isConnected => _isConnected;
 
-  void setToken(JWTToken token) {
-    final isNewInstance = !identical(_token, token) && _token != null;
-    _token = token;
-
-    if (isNewInstance) {
-      _closeChannel();
-      _isConnected = false;
-    }
-
-    unawaited(_ensureConnected());
-  }
-
   Future<void> _ensureConnected() async {
-    if (_token == null) return;
     if (_isConnected && _channel != null) return;
 
     if (_connectingFuture != null) {
@@ -78,14 +64,14 @@ class ChatManager {
   }
 
   Future<void> _connectInternal() async {
-    if (_token == null || _channel != null) return;
-
+    if (_channel != null) return;
+  
     try {
-      await _token!.updateToken();
+      final token = await JWTTokenManager().getJWTToken(update: true);
       _cancelReconnectTimer();
 
       final uri = Uri.parse(webSocketUrl).replace(
-        queryParameters: {"token": _token!.accessToken},
+        queryParameters: {"token": token.accessToken},
       );
 
       _channel = WebSocketChannel.connect(uri);
@@ -274,7 +260,7 @@ class ChatManager {
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(_reconnectDelay, () async {
       _isReconnecting = false;
-      if (!_isConnected && _token != null) {
+      if (!_isConnected) {
         await _ensureConnected();
       }
     });

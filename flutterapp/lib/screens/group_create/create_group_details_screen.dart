@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
-import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/conversation_service.dart';
@@ -10,14 +9,12 @@ import 'package:flutterapp/widgets/common/my_snack_bar.dart';
 import 'package:flutterapp/widgets/common/responsive_container.dart';
 
 class CreateGroupDetailsScreen extends StatefulWidget {
-  final JWTToken token;
   final ChatManager manager;
   final String currentUsername;
   final List<UserInfo> selectedUsers;
 
   const CreateGroupDetailsScreen({
     super.key,
-    required this.token,
     required this.manager,
     required this.currentUsername,
     required this.selectedUsers,
@@ -61,7 +58,6 @@ class _CreateGroupDetailsScreenState extends State<CreateGroupDetailsScreen> {
 
     try {
       await ConversationService.createConversation(
-        token: widget.token,
         name: name,
         usernames: widget.selectedUsers.map((u) => u.username).toList(),
       );
