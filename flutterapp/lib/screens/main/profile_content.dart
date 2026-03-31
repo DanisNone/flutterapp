@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
+import 'package:flutterapp/screens/followers_list_screen.dart';
 import 'package:flutterapp/service/api.dart' show getMe;
 import 'package:flutterapp/service/chat_repository.dart';
+import 'package:flutterapp/service/follower_service.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
@@ -71,6 +73,7 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
 
   void _logout() {
     JWTTokenManager().deleteJWTToken();
+    FollowerService().clear();
     context.read<ChatRepository>().clear();
     
     Navigator.pushAndRemoveUntil(
@@ -80,6 +83,17 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
       ),
       (route) => false,
     );
+  }
+
+  void _openFollowersList() {
+    if (_user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => FollowersListScreen(currentUserId: _user!.id),
+        ),
+      );
+    }
   }
 
   Widget _buildAvatar() {
@@ -126,6 +140,91 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
         ],
       ),
     );
+  }
+
+  Widget _buildFollowersButton(ThemeData theme) {
+    return Consumer<FollowerService>(
+      builder: (context, service, child) {
+        return Material(
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          child: InkWell(
+            onTap: _openFollowersList,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingL,
+                vertical: AppDimensions.paddingM,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.people,
+                    color: theme.colorScheme.primary,
+                    size: 24,
+                  ),
+                  const SizedBox(width: AppDimensions.paddingM),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Мои подписки',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (service.isLoading)
+                        SizedBox(
+                          height: 12,
+                          width: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.primary,
+                          ),
+                        )
+                      else
+                        Text(
+                          '${service.followers.length} ${_getFollowersCountText(service.followers.length)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: AppDimensions.paddingM),
+                  Icon(
+                    Icons.chevron_right,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _getFollowersCountText(int count) {
+    final lastDigit = count % 10;
+    final lastTwoDigits = count % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+      return 'подписчиков';
+    }
+
+    switch (lastDigit) {
+      case 1:
+        return 'подписчик';
+      case 2:
+      case 3:
+      case 4:
+        return 'подписчика';
+      default:
+        return 'подписчиков';
+    }
   }
 
   Widget _buildInfoCard({
@@ -257,6 +356,8 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
           ),
           const SizedBox(height: AppDimensions.paddingXS),
           _buildRoleBadge(),
+          const SizedBox(height: AppDimensions.paddingL),
+          _buildFollowersButton(theme),
           const SizedBox(height: AppDimensions.paddingXL),
           Column(
             children: _buildInfoCards()

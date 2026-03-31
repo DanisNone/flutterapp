@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterapp/screens/main/conversation_content.dart';
 import 'package:flutterapp/screens/main/profile_content.dart';
+import 'package:flutterapp/service/follower_service.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/model/jwttoken.dart';
 
@@ -23,6 +24,7 @@ class _MainScreenState extends State<MainScreen> {
     _pageController = PageController(initialPage: _selectedIndex);
     _pages.add(ConversationsContent());
     _pages.add(ProfileContent());
+    FollowerService().initialize();
   }
 
   @override

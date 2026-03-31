@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutterapp/model/jwttoken.dart';
 import 'package:flutterapp/model/user.dart';
+import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/routes/all_routes.dart';
 import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:http/http.dart' as http;
@@ -134,5 +135,55 @@ Future<JWTToken> login(String email, String password, String? fcmToken) async {
     return token;
   } else {
     throw Exception('Ошибка входа: ${res.statusCode} ${res.body}');
+  }
+}
+
+Future<void> followUser(int followingId) async {
+  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
+  final response = await http.post(
+    Uri.parse(followUrl),
+    headers: {
+      "Authorization": token.toHeaderValue(),
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({"following_id": followingId}),
+  );
+  await getFollowing();
+
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    return;
+  } else if (response.statusCode == 400) {
+    final Map<String, dynamic> data = json.decode(response.body);
+    throw Exception(data['detail'] ?? 'Ошибка подписки');
+  } else {
+    throw Exception('Ошибка подписки: ${response.statusCode}');
+  }
+}
+
+Future<List<UserInfo>> getFollowers({int limit = 50, int offset = 0}) async {
+  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
+  final response = await http.get(
+    Uri.parse(getFollowersUrl(limit, offset)),
+    headers: {"Authorization": token.toHeaderValue()},
+  );
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = json.decode(response.body);
+    return (data["users"] as List).map((e) => UserInfo.fromJson(e)).toList();
+  } else {
+    throw Exception('Ошибка получения списка подписчиков: ${response.statusCode}');
+  }
+}
+
+Future<List<UserInfo>> getFollowing({int limit = 50, int offset = 0}) async {
+  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
+  final response = await http.get(
+    Uri.parse(getFollowingUrl(limit, offset)),
+    headers: {"Authorization": token.toHeaderValue()},
+  );
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = json.decode(response.body);
+    return (data["users"] as List).map((e) => UserInfo.fromJson(e)).toList();
+  } else {
+    throw Exception('Ошибка получения списка подписчиков: ${response.statusCode}');
   }
 }

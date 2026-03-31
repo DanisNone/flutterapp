@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/firebase_options.dart';
 import 'package:flutterapp/service/chat_manager.dart';
 import 'package:flutterapp/service/chat_repository.dart';
+import 'package:flutterapp/service/follower_service.dart';
 import 'package:flutterapp/service/notification_service.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/screens/auth/login_screen.dart';
@@ -45,6 +46,7 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => NotificationService()..init(),
         ),
+        ChangeNotifierProvider(create: (_) => FollowerService()),
       ],
       child: const MyApp(),
     ),
