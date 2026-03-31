@@ -10,6 +10,8 @@ import 'package:flutterapp/model/conversation_info.dart';
 import 'package:flutterapp/model/message.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_repository.dart';
+import 'package:flutterapp/screens/group_info_screen.dart';
+import 'package:flutterapp/screens/user_profile_screen.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/widgets/chat/chat_input.dart';
 import 'package:flutterapp/widgets/chat/message_bubble.dart';
@@ -299,6 +301,75 @@ class _ChatScreenState extends State<ChatScreen> {
     return conversation?.readByUsers(message, widget.userId) ?? <UserInfo>[];
   }
 
+  ConversationInfo? _dialogConversation() {
+    final conversation = _conversationForCurrentChat();
+    if (conversation?.chatType == ChatType.dialog) return conversation;
+    return null;
+  }
+
+  UserInfo? _dialogPartner() {
+    final conversation = _dialogConversation();
+    if (conversation == null) return null;
+
+    final others = conversation.otherUsers(widget.userId);
+    if (others.isEmpty) return null;
+    return others.first;
+  }
+
+  UserInfo? _currentUserInfo() {
+    final conversation = _conversationForCurrentChat();
+    if (conversation == null) return null;
+
+    final me = conversation.userInfoById(widget.userId);
+    if (me != null) return me;
+
+    if (conversation.usersInfo.isNotEmpty) {
+      return conversation.usersInfo.first;
+    }
+
+    return null;
+  }
+
+  void _openConversationDetails() {
+    final conversation = _conversationForCurrentChat();
+    if (conversation == null) return;
+
+    switch (conversation.chatType) {
+      case ChatType.saved:
+        final me = _currentUserInfo();
+        if (me != null) {
+          _openUserProfile(me);
+        }
+        return;
+      case ChatType.dialog:
+        final dialogPartner = _dialogPartner();
+        if (dialogPartner != null) {
+          _openUserProfile(dialogPartner);
+        }
+        return;
+      case ChatType.group:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GroupInfoScreen(
+              conversation: conversation,
+              currentUserId: widget.userId,
+            ),
+          ),
+        );
+        return;
+    }
+  }
+
+  void _openUserProfile(UserInfo user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserProfileScreen(user: user, currentUserId: widget.userId),
+      ),
+    );
+  }
+
   bool _isSameDay(DateTime a, DateTime b) {
     final la = a.toLocal();
     final lb = b.toLocal();
@@ -367,28 +438,60 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   AppBar _buildNormalAppBar(ThemeData theme) {
-    return AppBar(
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      foregroundColor: theme.colorScheme.onSurface,
-      centerTitle: true,
-      title: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 320),
+    final conversation = _conversationForCurrentChat();
+    final titleWidget = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: conversation == null ? null : _openConversationDetails,
         child: Container(
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            widget.chatName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium,
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                conversation?.chatType == ChatType.group
+                    ? Icons.group_outlined
+                    : conversation?.chatType == ChatType.saved
+                        ? Icons.bookmark_outline
+                        : Icons.person_outline,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  widget.chatName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
         ),
       ),
+    );
+
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      foregroundColor: theme.colorScheme.onSurface,
+      centerTitle: true,
+      title: titleWidget,
     );
   }
 
@@ -585,17 +688,21 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (showAvatar)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: ImageLoader().loadImage(
-                      userInfo?.avatarUrl,
-                      userInfo?.id == 3 ? 64 : 32,
-                      Center(
-                        child: Text(
-                          userInfo != null && userInfo.username.isNotEmpty
-                              ? userInfo.username[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: userInfo == null ? null : () => _openUserProfile(userInfo),
+                      child: ImageLoader().loadImage(
+                        userInfo?.avatarUrl,
+                        userInfo?.id == 3 ? 64 : 32,
+                        Center(
+                          child: Text(
+                            userInfo != null && userInfo.username.isNotEmpty
+                                ? userInfo.username[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

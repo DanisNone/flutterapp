@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutterapp/model/user.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/service/chat_manager.dart';
-import 'package:flutterapp/service/api.dart';
 import 'package:flutterapp/service/image_loader_service.dart';
 import 'package:flutterapp/widgets/common/loading_indicator.dart';
 import 'package:flutterapp/widgets/common/my_snack_bar.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/widgets/common/responsive_container.dart';
-import 'package:flutterapp/screens/chat_screen.dart';
+import 'package:flutterapp/screens/user_profile_screen.dart';
 
 class SearchUsersScreen extends StatefulWidget {
   final ChatManager manager;
@@ -80,49 +79,16 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
     widget.manager.searchUsers(query);
   }
 
-  Future<void> _createConversationWithUser(UserInfo otherUser) async {
-    if (otherUser.id == widget.currentUser.id) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(
-          text: 'Нельзя начать переписку с собой',
-          backgroundColor: Theme.of(context).colorScheme.error,
+  void _openUserProfile(UserInfo user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserProfileScreen(
+          user: user,
+          currentUserId: widget.currentUser.id,
         ),
-      );
-      return;
-    }
-    try {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: LoadingIndicator()),
-      );
-      final (conversationId, alreadyExists) = await getOrCreateDialog(
-        widget.currentUser,
-        otherUser.username
-      );
-      if (!mounted) return;
-      Navigator.pop(context);
-      widget.manager.loadConversations();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(
-            conversationId: conversationId,
-            userId: widget.currentUser.id,
-            chatName: otherUser.username
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        MySnackBar(
-          text: 'Ошибка создания: $e',
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -191,7 +157,7 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
                         ),
                         title: Text(user.username, style: theme.textTheme.titleMedium),
                         subtitle: Text(user.fullName ?? '', style: theme.textTheme.bodySmall),
-                        onTap: () => _createConversationWithUser(user),
+                        onTap: () => _openUserProfile(user),
                       );
                     },
                   ),

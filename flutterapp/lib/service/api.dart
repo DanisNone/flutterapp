@@ -6,10 +6,7 @@ import 'package:flutterapp/routes/all_routes.dart';
 import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:http/http.dart' as http;
 
-Future<(int, bool)> getOrCreateDialog(
-  User user,
-  String otherUsername
-) async {
+Future<(int, bool)> getOrCreateDialog(String otherUsername) async {
   JWTToken token = await JWTTokenManager().getJWTToken(update: true);
   final response = await http.get(
     Uri.parse(getOrCreateDialogUrl(otherUsername)),
@@ -24,10 +21,7 @@ Future<(int, bool)> getOrCreateDialog(
   );
 }
 
-
-Future<(int, bool)> getOrCreateSaved(
-  User user,
-) async {
+Future<(int, bool)> getOrCreateSaved() async {
   JWTToken token = await JWTTokenManager().getJWTToken(update: true);
   final response = await http.get(
     Uri.parse(getOrCreateSavedUrl),
@@ -41,7 +35,6 @@ Future<(int, bool)> getOrCreateSaved(
     'Failed to create saved: ${response.statusCode}; ${data["detail"]}',
   );
 }
-
 
 Future<User> getMe() async {
   JWTToken token = await JWTTokenManager().getJWTToken(update: true);

@@ -78,7 +78,7 @@ class _ConversationsContentState extends State<ConversationsContent>
 
 
     try {
-      final (conversationId, exists) = await getOrCreateSaved(_user!);
+      final (conversationId, _) = await getOrCreateSaved();
 
       if (!mounted) return;
 
