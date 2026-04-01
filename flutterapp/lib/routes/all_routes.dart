@@ -21,7 +21,8 @@ const String createConversationUrl = "$apiV1/create_group_conversation";
 
 
 const String followUrl = "$apiV1/follow";
-String getFollowersUrl(int limit, int offset) => "$apiV1/get_followers/$limit/$offset";
-String getFollowingUrl(int limit, int offset) => "$apiV1/get_following/$limit/$offset";
+const String unfollowUrl = "$apiV1/unfollow";
+const String meFollowersUrl = "$apiV1/users/me/followers";
+const String meFollowingsUrl = "$apiV1/users/me/following";
 
 const String webSocketUrl = "wss://gubajdullindanis0.fvds.ru/api/v1/ws2/";

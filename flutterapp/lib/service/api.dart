@@ -7,6 +7,20 @@ import 'package:flutterapp/routes/all_routes.dart';
 import 'package:flutterapp/service/jwttoken_manager.dart';
 import 'package:http/http.dart' as http;
 
+class PagedUserInfoPage {
+  final List<UserInfo> users;
+  final String? nextCursor;
+  final bool hasMore;
+  final int? totalCount;
+
+  const PagedUserInfoPage({
+    required this.users,
+    required this.nextCursor,
+    required this.hasMore,
+    required this.totalCount,
+  });
+}
+
 Future<(int, bool)> getOrCreateDialog(String otherUsername) async {
   JWTToken token = await JWTTokenManager().getJWTToken(update: true);
   final response = await http.get(
@@ -51,22 +65,37 @@ Future<User> getMe() async {
   }
 }
 
-Future<List<User>> searchUsers(
+Future<List<UserInfo>> searchUsers(
   String query, {
   int limit = 20,
 }) async {
-  JWTToken? token = await JWTTokenManager().getJWTToken(update: true);
-  final uri = Uri.parse(
-    searchUsersUrl,
-  ).replace(queryParameters: {"q": query, "limit": limit.toString()});
+  final token = await JWTTokenManager().getJWTToken(update: true);
+  final uri = Uri.parse(searchUsersUrl).replace(
+    queryParameters: {
+      'q': query,
+      'limit': limit.toString(),
+    },
+  );
   final res = await http.get(
     uri,
     headers: {"Authorization": token.toHeaderValue()},
   );
 
   if (res.statusCode == 200) {
-    final List<dynamic> data = jsonDecode(res.body);
-    return data.map((json) => User.fromJson(json)).toList();
+    final decoded = jsonDecode(res.body);
+    if (decoded is List) {
+      return decoded
+          .whereType<Map>()
+          .map((json) => UserInfo.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+    }
+    if (decoded is Map<String, dynamic> && decoded['users'] is List) {
+      return (decoded['users'] as List)
+          .whereType<Map>()
+          .map((json) => UserInfo.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+    }
+    return const <UserInfo>[];
   } else {
     throw Exception('Ошибка поиска: ${res.statusCode} ${res.body}');
   }
@@ -78,7 +107,7 @@ Future<JWTToken> register(
   String fullName,
   String password,
   String confirmPassword,
-  String? fcmToken
+  String? fcmToken,
 ) async {
   if (password != confirmPassword) {
     throw Exception('Пароли не совпадают');
@@ -91,7 +120,8 @@ Future<JWTToken> register(
   try {
     final res = await http
         .post(
-          Uri.parse(registerUrl).replace(queryParameters: {"fcm_token": fcmToken}),
+          Uri.parse(registerUrl)
+              .replace(queryParameters: {"fcm_token": fcmToken}),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             "email": email,
@@ -139,7 +169,7 @@ Future<JWTToken> login(String email, String password, String? fcmToken) async {
 }
 
 Future<void> followUser(int followingId) async {
-  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
+  final token = await JWTTokenManager().getJWTToken(update: true);
   final response = await http.post(
     Uri.parse(followUrl),
     headers: {
@@ -148,42 +178,174 @@ Future<void> followUser(int followingId) async {
     },
     body: jsonEncode({"following_id": followingId}),
   );
-  await getFollowing();
 
   if (response.statusCode == 200 || response.statusCode == 201) {
     return;
-  } else if (response.statusCode == 400) {
-    final Map<String, dynamic> data = json.decode(response.body);
-    throw Exception(data['detail'] ?? 'Ошибка подписки');
-  } else {
-    throw Exception('Ошибка подписки: ${response.statusCode}');
   }
+
+  String? detail;
+  if (response.body.isNotEmpty) {
+    try {
+      final data = json.decode(response.body);
+      if (data is Map<String, dynamic> && data['detail'] != null) {
+        detail = data['detail'].toString();
+      }
+    } catch (_) {
+      // Fall through to a generic error below.
+    }
+  }
+
+  throw Exception(detail ?? 'Ошибка подписки: ${response.statusCode}');
+}
+
+Future<void> unfollowUser(int userId) async {
+  final token = await JWTTokenManager().getJWTToken(update: true);
+  final response = await http.delete(
+    Uri.parse(unfollowUrl),
+    headers: {
+      "Authorization": token.toHeaderValue(),
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({"following_id": userId})
+  );
+
+  if (response.statusCode == 200 || response.statusCode == 204) {
+    return;
+  }
+
+  String? detail;
+  if (response.body.isNotEmpty) {
+    try {
+      final data = json.decode(response.body);
+      if (data is Map<String, dynamic> && data['detail'] != null) {
+        detail = data['detail'].toString();
+      }
+    } catch (_) {
+      // Fall through to a generic error below.
+    }
+  }
+
+  throw Exception(detail ?? 'Ошибка отписки: ${response.statusCode}');
+}
+
+Future<PagedUserInfoPage> getFollowersPage({
+  int limit = 50,
+  String? cursor,
+  String? q,
+}) async {
+  return _loadPagedRelations(
+    limit: limit,
+    cursor: cursor,
+    q: q,
+    url: Uri.parse(meFollowersUrl)
+  );
+}
+
+Future<PagedUserInfoPage> getFollowingPage({
+  int limit = 50,
+  String? cursor,
+  String? q,
+}) async {
+  return _loadPagedRelations(
+    limit: limit,
+    cursor: cursor,
+    q: q,
+    url: Uri.parse(meFollowingsUrl)
+  );
+}
+
+Future<PagedUserInfoPage> _loadPagedRelations({
+  required int limit,
+  required String? cursor,
+  required String? q,
+  required Uri url
+}) async {
+  final token = await JWTTokenManager().getJWTToken(update: true);
+  final normalizedQuery = q?.trim();
+  final parameters = <String, String>{
+    'limit': limit.toString(),
+    if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    if (normalizedQuery != null && normalizedQuery.isNotEmpty) 'q': normalizedQuery,
+  };
+
+  final newStyleUri = url.replace(queryParameters: parameters);
+  final response = await http.get(
+    newStyleUri,
+    headers: {"Authorization": token.toHeaderValue()},
+  );
+
+  if (response.statusCode == 200) {
+    return _parsePagedUsersResponse(response.body, fallbackLimit: limit, cursor: cursor);
+  }
+  throw Exception('Ошибка получения списка: ${response.statusCode} ${response.body}');
+}
+
+PagedUserInfoPage _parsePagedUsersResponse(
+  String body, {
+  required int fallbackLimit,
+  required String? cursor,
+}) {
+  final cursorOffset = int.tryParse(cursor ?? '') ?? 0;
+  final decoded = jsonDecode(body);
+  if (decoded is Map<String, dynamic>) {
+    final rawUsers = decoded['users'];
+    final users = rawUsers is List
+        ? rawUsers
+            .whereType<Map>()
+            .map((json) => UserInfo.fromJson(Map<String, dynamic>.from(json)))
+            .toList()
+        : <UserInfo>[];
+
+    final page = decoded['page'];
+    final pageMap = page is Map<String, dynamic>
+        ? page
+        : page is Map
+            ? Map<String, dynamic>.from(page)
+            : <String, dynamic>{};
+
+    final nextCursorFromApi = pageMap['next_cursor']?.toString();
+    final hasMore = pageMap['has_more'] as bool? ??
+        users.length >= fallbackLimit;
+    final fallbackNextCursor = hasMore ? (cursorOffset + users.length).toString() : null;
+    final totalCount = pageMap['total_count'] as int?;
+
+    return PagedUserInfoPage(
+      users: users,
+      nextCursor: nextCursorFromApi ?? fallbackNextCursor,
+      hasMore: hasMore,
+      totalCount: totalCount,
+    );
+  }
+
+  if (decoded is List) {
+    final users = decoded
+        .whereType<Map>()
+        .map((json) => UserInfo.fromJson(Map<String, dynamic>.from(json)))
+        .toList();
+    final hasMore = users.length >= fallbackLimit;
+    final nextCursor = hasMore ? (cursorOffset + users.length).toString() : null;
+    return PagedUserInfoPage(
+      users: users,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+      totalCount: null,
+    );
+  }
+
+  return const PagedUserInfoPage(
+    users: <UserInfo>[],
+    nextCursor: null,
+    hasMore: false,
+    totalCount: null,
+  );
 }
 
 Future<List<UserInfo>> getFollowers({int limit = 50, int offset = 0}) async {
-  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
-  final response = await http.get(
-    Uri.parse(getFollowersUrl(limit, offset)),
-    headers: {"Authorization": token.toHeaderValue()},
-  );
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> data = json.decode(response.body);
-    return (data["users"] as List).map((e) => UserInfo.fromJson(e)).toList();
-  } else {
-    throw Exception('Ошибка получения списка подписчиков: ${response.statusCode}');
-  }
+  final page = await getFollowersPage(limit: limit, cursor: offset.toString());
+  return page.users;
 }
 
 Future<List<UserInfo>> getFollowing({int limit = 50, int offset = 0}) async {
-  JWTToken token = await JWTTokenManager().getJWTToken(update: true);
-  final response = await http.get(
-    Uri.parse(getFollowingUrl(limit, offset)),
-    headers: {"Authorization": token.toHeaderValue()},
-  );
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> data = json.decode(response.body);
-    return (data["users"] as List).map((e) => UserInfo.fromJson(e)).toList();
-  } else {
-    throw Exception('Ошибка получения списка подписчиков: ${response.statusCode}');
-  }
+  final page = await getFollowingPage(limit: limit, cursor: offset.toString());
+  return page.users;
 }

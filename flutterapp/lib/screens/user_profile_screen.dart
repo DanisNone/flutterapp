@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterapp/constants/app_colors.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/model/user_info.dart';
 import 'package:flutterapp/screens/chat_screen.dart';
@@ -29,7 +28,6 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   bool _isOpeningChat = false;
-  bool _isSubscribing = false;
 
   String _initials(String username) {
     final parts = username
@@ -90,7 +88,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  Future<void> _subscribe() async {
+  Future<void> _toggleFollow(FollowerService service, bool isFollowing) async {
     if (widget.user.id == widget.currentUserId) {
       ScaffoldMessenger.of(context).showSnackBar(
         MySnackBar(
@@ -101,100 +99,127 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       return;
     }
 
-    setState(() => _isSubscribing = true);
+    final success = isFollowing
+        ? await service.unfollow(widget.user.id)
+        : await service.follow(widget.user.id);
 
-    try {
-      final success = await FollowerService().follow(widget.user.id);
+    if (!mounted) return;
 
-      if (!mounted) return;
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          MySnackBar(
-            text: 'Вы подписались на ${widget.user.username}',
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         MySnackBar(
-          text: 'Не удалось подписаться: $e',
-          backgroundColor: Theme.of(context).colorScheme.error,
+          text: isFollowing
+              ? 'Вы отписались от ${widget.user.username}'
+              : 'Вы подписались на ${widget.user.username}',
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
-    } finally {
-      if (mounted) setState(() => _isSubscribing = false);
+      return;
     }
+
+    final error = service.mutationError ?? 'Не удалось обновить подписку';
+    ScaffoldMessenger.of(context).showSnackBar(
+      MySnackBar(
+        text: error,
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
   }
 
-  Widget _buildActionButtons(bool isFollowing, ThemeData theme) {
-    final canInteract = widget.user.id != widget.currentUserId;
+  Widget _buildStatusChip(ThemeData theme, bool isFollowing) {
+    if (!isFollowing) return const SizedBox.shrink();
 
-    if (!canInteract) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL),
-      child: Column(
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingM,
+        vertical: AppDimensions.paddingXS,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              // Кнопка подписки
-              Expanded(
-                child: _buildSubscribeButton(isFollowing, theme),
-              ),
-              const SizedBox(width: AppDimensions.paddingM),
-              // Кнопка сообщения
-              Expanded(
-                child: _buildMessageButton(theme),
-              ),
-            ],
+          Icon(
+            Icons.check_circle_outline,
+            size: 14,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Подписаны',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSubscribeButton(bool isFollowing, ThemeData theme) {
-    final bgColor = isFollowing
+  Widget _buildPrimaryFollowButton(
+    ThemeData theme,
+    FollowerService service,
+    bool isFollowing,
+  ) {
+    final isPending = service.isRelationPending(widget.user.id);
+    final isSelf = widget.user.id == widget.currentUserId;
+    final label = isPending
+        ? 'В процессе...'
+        : isFollowing
+            ? 'Отписаться'
+            : 'Подписаться';
+
+    final background = isFollowing
         ? theme.colorScheme.surfaceContainerHighest
         : theme.colorScheme.primary;
-    final fgColor = isFollowing
-        ? theme.colorScheme.onSurfaceVariant
+    final foreground = isFollowing
+        ? theme.colorScheme.onSurface
         : theme.colorScheme.onPrimary;
 
-    return Material(
-      color: bgColor,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-      child: InkWell(
-        onTap: isFollowing || _isSubscribing ? null : _subscribe,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        child: Container(
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.tonal(
+        onPressed: isSelf || isPending ? null : () => _toggleFollow(service, isFollowing),
+        style: FilledButton.styleFrom(
+          backgroundColor: background,
+          foregroundColor: foreground,
+          disabledBackgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+          disabledForegroundColor: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
           padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingM),
-          child: _isSubscribing
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          ),
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: isPending
               ? SizedBox(
-                  height: 24,
-                  width: 24,
+                  key: const ValueKey('follow-loading'),
+                  height: 20,
+                  width: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: fgColor,
+                    color: foreground,
                   ),
                 )
               : Row(
+                  key: ValueKey(label),
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      isFollowing ? Icons.check : Icons.person_add,
+                      isFollowing ? Icons.person_remove_alt_1 : Icons.person_add_alt_1,
                       size: 20,
-                      color: fgColor,
+                      color: foreground,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Text(
-                      isFollowing ? 'Подписаны' : 'Подписаться',
+                      label,
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: fgColor,
-                        fontWeight: FontWeight.w600,
+                        color: foreground,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -205,73 +230,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Widget _buildMessageButton(ThemeData theme) {
-    return Material(
-      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-      child: InkWell(
-        onTap: _isOpeningChat ? null : _openConversation,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        child: Container(
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: _isOpeningChat ? null : _openConversation,
+        style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingM),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.chat_bubble_outline,
-                size: 20,
-                color: theme.colorScheme.onSecondaryContainer,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Написать',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onSecondaryContainer,
-                  fontWeight: FontWeight.w600,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          ),
+          side: BorderSide(color: theme.colorScheme.outlineVariant),
+          foregroundColor: theme.colorScheme.onSurface,
+        ),
+        icon: _isOpeningChat
+            ? SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-              ),
-            ],
+              )
+            : const Icon(Icons.chat_bubble_outline, size: 20),
+        label: Text(
+          'Написать сообщение',
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFollowingBadge(ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.only(top: AppDimensions.paddingS),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingM,
-        vertical: AppDimensions.paddingXS,
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.2),
-            theme.colorScheme.secondary.withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.check_circle,
-            size: 14,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'Вы подписаны',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -284,21 +270,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     int? maxLines,
   }) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final displayValue = value.trim().isEmpty ? 'Не указано' : value;
 
-    final cardTint = isDark ? AppColors.surfaceElevatedSolid : AppColors.cardLightBackground;
-
-    return MyContainer(
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(AppDimensions.paddingM),
-      tintColor: cardTint,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.14 : 0.10),
+              color: theme.colorScheme.primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -347,7 +335,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final hasAvatar = widget.user.avatarUrl != null && widget.user.avatarUrl!.isNotEmpty;
 
     final canOpenChat = widget.user.id != widget.currentUserId;
-    final headerAccent = theme.colorScheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.12);
+    final headerAccent = theme.colorScheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.10);
 
     return GradientBackground(
       child: Scaffold(
@@ -358,12 +346,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           backgroundColor: Colors.transparent,
           foregroundColor: theme.colorScheme.onSurface,
           actions: [
-            if (canOpenChat)
-              IconButton(
-                icon: const Icon(Icons.chat_bubble_outline),
-                tooltip: 'Открыть переписку',
-                onPressed: _isOpeningChat ? null : _openConversation,
-              ),
             PopupMenuButton<String>(
               onSelected: (value) {
                 switch (value) {
@@ -379,17 +361,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 }
               },
               itemBuilder: (context) => [
-                if (canOpenChat)
-                  const PopupMenuItem<String>(
-                    value: 'open_chat',
-                    child: Row(
-                      children: [
-                        Icon(Icons.chat_bubble_outline),
-                        SizedBox(width: 12),
-                        Text('Открыть переписку'),
-                      ],
-                    ),
-                  ),
                 const PopupMenuItem<String>(
                   value: 'copy_username',
                   child: Row(
@@ -416,36 +387,38 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 AppDimensions.paddingXL,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 8),
-                  Hero(
-                    tag: 'user_avatar_${widget.user.id}',
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: headerAccent,
-                          width: 2,
-                        ),
-                      ),
-                      child: ImageLoader().loadImage(
-                        widget.user.avatarUrl,
-                        112,
-                        Container(
-                          width: 112,
-                          height: 112,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: theme.colorScheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.16 : 0.10),
+                  Center(
+                    child: Hero(
+                      tag: 'user_avatar_${widget.user.id}',
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: headerAccent,
+                            width: 2,
                           ),
-                          child: Text(
-                            _initials(widget.user.username),
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
+                        ),
+                        child: ImageLoader().loadImage(
+                          widget.user.avatarUrl,
+                          112,
+                          Container(
+                            width: 112,
+                            height: 112,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: theme.colorScheme.primary.withValues(alpha: theme.brightness == Brightness.dark ? 0.16 : 0.10),
+                            ),
+                            child: Text(
+                              _initials(widget.user.username),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -471,17 +444,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ],
+                  const SizedBox(height: AppDimensions.paddingM),
                   Consumer<FollowerService>(
                     builder: (context, service, child) {
-                      final isFollowing = service.isFollowing(widget.user.id);
-                      return isFollowing ? _buildFollowingBadge(theme) : const SizedBox.shrink();
+                      final isFollowing = service.isFollowing(widget.user.id) || widget.user.isFollowing == true;
+                      return Center(child: _buildStatusChip(theme, isFollowing));
                     },
                   ),
                   const SizedBox(height: AppDimensions.paddingL),
                   Consumer<FollowerService>(
                     builder: (context, service, child) {
-                      final isFollowing = service.isFollowing(widget.user.id);
-                      return _buildActionButtons(isFollowing, theme);
+                      final isFollowing = service.isFollowing(widget.user.id) || widget.user.isFollowing == true;
+                      return Column(
+                        children: [
+                          _buildPrimaryFollowButton(theme, service, isFollowing),
+                          if (canOpenChat) ...[
+                            const SizedBox(height: AppDimensions.paddingM),
+                            _buildMessageButton(theme),
+                          ],
+                        ],
+                      );
                     },
                   ),
                   const SizedBox(height: AppDimensions.paddingL),

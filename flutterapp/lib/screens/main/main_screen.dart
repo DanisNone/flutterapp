@@ -4,6 +4,7 @@ import 'package:flutterapp/screens/main/profile_content.dart';
 import 'package:flutterapp/service/follower_service.dart';
 import 'package:flutterapp/theme/app_theme.dart';
 import 'package:flutterapp/model/jwttoken.dart';
+import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
   final JWTToken token;
@@ -24,7 +25,10 @@ class _MainScreenState extends State<MainScreen> {
     _pageController = PageController(initialPage: _selectedIndex);
     _pages.add(ConversationsContent());
     _pages.add(ProfileContent());
-    FollowerService().initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<FollowerService>().loadFirstFollowingPage();
+    });
   }
 
   @override

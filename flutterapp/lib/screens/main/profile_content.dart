@@ -73,7 +73,7 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
 
   void _logout() {
     JWTTokenManager().deleteJWTToken();
-    FollowerService().clear();
+    context.read<FollowerService>().clear();
     context.read<ChatRepository>().clear();
     
     Navigator.pushAndRemoveUntil(
@@ -143,88 +143,55 @@ class _ProfileContentState extends State<ProfileContent> with AutomaticKeepAlive
   }
 
   Widget _buildFollowersButton(ThemeData theme) {
-    return Consumer<FollowerService>(
-      builder: (context, service, child) {
-        return Material(
-          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          child: InkWell(
-            onTap: _openFollowersList,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingL,
-                vertical: AppDimensions.paddingM,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.people,
-                    color: theme.colorScheme.primary,
-                    size: 24,
-                  ),
-                  const SizedBox(width: AppDimensions.paddingM),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Мои подписки',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (service.isLoading)
-                        SizedBox(
-                          height: 12,
-                          width: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: theme.colorScheme.primary,
-                          ),
-                        )
-                      else
-                        Text(
-                          '${service.followers.length} ${_getFollowersCountText(service.followers.length)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(width: AppDimensions.paddingM),
-                  Icon(
-                    Icons.chevron_right,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
-              ),
-            ),
+    return Material(
+      color: theme.colorScheme.primary.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+      child: InkWell(
+        onTap: _openFollowersList,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingL,
+            vertical: AppDimensions.paddingM,
           ),
-        );
-      },
+          child: Row(
+            children: [
+              Icon(
+                Icons.people_outline,
+                color: theme.colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: AppDimensions.paddingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Подписчики',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Открыть список и поиск',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-  }
-
-  String _getFollowersCountText(int count) {
-    final lastDigit = count % 10;
-    final lastTwoDigits = count % 100;
-
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-      return 'подписчиков';
-    }
-
-    switch (lastDigit) {
-      case 1:
-        return 'подписчик';
-      case 2:
-      case 3:
-      case 4:
-        return 'подписчика';
-      default:
-        return 'подписчиков';
-    }
   }
 
   Widget _buildInfoCard({

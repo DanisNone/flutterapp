@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutterapp/constants/app_dimensions.dart';
 import 'package:flutterapp/model/user_info.dart';
@@ -25,63 +27,63 @@ class FollowersListScreen extends StatefulWidget {
 
 class _FollowersListScreenState extends State<FollowersListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<UserInfo> _filteredFollowers = [];
-  bool _isSearching = false;
+  final ScrollController _scrollController = ScrollController();
+  Timer? _debounce;
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_handleScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      FollowerService().initialize();
+      if (!mounted) return;
+      context.read<FollowerService>().loadFirstFollowersPage();
     });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
-    final service = FollowerService();
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 240) {
+      context.read<FollowerService>().loadMoreFollowers();
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
     setState(() {
-      if (query.isEmpty) {
-        _filteredFollowers = [];
-        _isSearching = false;
-      } else {
-        _isSearching = true;
-        _filteredFollowers = service.followers
-            .where((f) =>
-                f.username.toLowerCase().contains(query.toLowerCase()) ||
-                (f.fullName?.toLowerCase().contains(query.toLowerCase()) ?? false))
-            .toList();
-      }
+      _query = value;
+    });
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      context.read<FollowerService>().loadFirstFollowersPage(query: _query);
     });
   }
 
   void _clearSearch() {
     _searchController.clear();
+    _debounce?.cancel();
     setState(() {
-      _filteredFollowers = [];
-      _isSearching = false;
+      _query = '';
     });
+    context.read<FollowerService>().loadFirstFollowersPage(query: '');
   }
 
   void _openUserProfile(UserInfo follower) {
-    final userInfo = UserInfo(
-      id: follower.id,
-      username: follower.username,
-      avatarUrl: follower.avatarUrl,
-      fullName: follower.fullName,
-      bio: follower.bio,
-      lastMessageReadId: -1,
-    );
-
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => UserProfileScreen(
-          user: userInfo,
+          user: follower,
           currentUserId: widget.currentUserId,
         ),
       ),
@@ -99,49 +101,29 @@ class _FollowersListScreenState extends State<FollowersListScreen> {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  String _getFollowersCountText(int count) {
-    final lastDigit = count % 10;
-    final lastTwoDigits = count % 100;
-
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-      return 'подписчиков';
-    }
-
-    switch (lastDigit) {
-      case 1:
-        return 'подписчик';
-      case 2:
-      case 3:
-      case 4:
-        return 'подписчика';
-      default:
-        return 'подписчиков';
-    }
-  }
-
   Widget _buildSearchBar(ThemeData theme) {
     return Container(
       margin: const EdgeInsets.all(AppDimensions.paddingM),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.50),
         borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.18),
         ),
       ),
       child: TextField(
         controller: _searchController,
         onChanged: _onSearchChanged,
         decoration: InputDecoration(
-          hintText: 'Поиск подписчиков...',
+          hintText: 'Поиск по подписчикам...',
           hintStyle: TextStyle(
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.60),
           ),
           prefixIcon: Icon(
             Icons.search,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          suffixIcon: _isSearching
+          suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
                   icon: Icon(
                     Icons.clear,
@@ -160,264 +142,234 @@ class _FollowersListScreenState extends State<FollowersListScreen> {
     );
   }
 
-  Widget _buildFollowerTile(UserInfo follower, ThemeData theme) {
+  Widget _buildListTile(UserInfo follower, ThemeData theme, FollowerService service) {
     final hasAvatar = follower.avatarUrl != null && follower.avatarUrl!.isNotEmpty;
-    final isCurrentUser = follower.id == widget.currentUserId;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingM,
-        vertical: AppDimensions.paddingXS,
-      ),
-      child: Material(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.30),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+      child: InkWell(
+        onTap: () => _openUserProfile(follower),
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        child: InkWell(
-          onTap: () => _openUserProfile(follower),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingM),
-            child: Row(
-              children: [
-                // Avatar
-                Hero(
-                  tag: 'follower_avatar_${follower.id}',
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.colorScheme.primary.withValues(alpha: 0.2),
-                          theme.colorScheme.secondary.withValues(alpha: 0.1),
-                        ],
-                      ),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: hasAvatar
-                        ? ClipOval(
-                            child: ImageLoader().loadImage(
-                              follower.avatarUrl,
-                              56,
-                              Center(
-                                child: Text(
-                                  _initials(follower.username),
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        : Center(
-                            child: Text(
-                              _initials(follower.username),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingM),
+          child: Row(
+            children: [
+              Hero(
+                tag: 'follower_avatar_${follower.id}',
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.10),
                   ),
-                ),
-                const SizedBox(width: AppDimensions.paddingM),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              follower.username,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (isCurrentUser)
-                            Container(
-                              margin: const EdgeInsets.only(left: AppDimensions.paddingS),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimensions.paddingS,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(AppDimensions.radiusS),
-                              ),
+                  child: hasAvatar
+                      ? ClipOval(
+                          child: ImageLoader().loadImage(
+                            follower.avatarUrl,
+                            52,
+                            Center(
                               child: Text(
-                                'Вы',
-                                style: theme.textTheme.bodySmall?.copyWith(
+                                _initials(follower.username),
+                                style: theme.textTheme.titleMedium?.copyWith(
                                   color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                        ],
-                      ),
-                      if (follower.fullName != null && follower.fullName != follower.username)
-                        Text(
-                          '@${follower.username}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      if (follower.bio != null && follower.bio!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppDimensions.paddingXS),
+                        )
+                      : Center(
                           child: Text(
-                            follower.bio!,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                            _initials(follower.username),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
                             ),
-                            maxLines: 2,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.paddingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            follower.username,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                      ],
+                    ),
+                    if ((follower.fullName ?? '').trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        follower.fullName!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
-                  ),
+                    if ((follower.bio ?? '').trim().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        follower.bio!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
                 ),
-                // Arrow
-                Icon(
-                  Icons.chevron_right,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: AppDimensions.paddingS),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildContent(FollowerService service, ThemeData theme) {
-    final followers = _isSearching ? _filteredFollowers : service.followers;
-
-    if (service.isLoading && service.followers.isEmpty) {
-      return const Center(
-        child: LoadingIndicator(message: 'Загрузка подписчиков...'),
+  Widget _buildSentinel(ThemeData theme, FollowerService service) {
+    if (service.isLoadingFollowers) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingL),
+        child: Center(child: LoadingIndicator()),
       );
     }
+    if (service.hasMoreFollowers) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingM),
+        child: Center(
+          child: Text(
+            'Прокрутите вниз, чтобы загрузить ещё',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
 
-    if (service.error != null && service.followers.isEmpty) {
+  Widget _buildBody(ThemeData theme, FollowerService service) {
+    final isInitialLoading = service.isLoadingFollowers && service.followers.isEmpty;
+    final hasError = service.followersError != null && service.followers.isEmpty;
+
+    if (isInitialLoading) {
+      return const Center(child: LoadingIndicator());
+    }
+
+    if (hasError) {
       return ErrorView(
-        error: service.error!,
-        onRetry: () => service.refresh(),
+        error: service.followersError!,
+        onRetry: () => service.loadFirstFollowersPage(query: _query),
       );
     }
 
     if (service.followers.isEmpty) {
       return EmptyState(
         icon: Icons.people_outline,
-        message: 'У вас пока нет подписчиков\n\nНайдите пользователей через поиск и подпишитесь на них',
-        buttonText: 'Найти пользователей',
-        onButtonPressed: () => Navigator.pop(context),
-      );
-    }
-
-    if (_isSearching && _filteredFollowers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 64,
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: AppDimensions.paddingM),
-            Text(
-              'Ничего не найдено',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+        message: _query.isNotEmpty
+            ? 'Ничего не найдено. Попробуйте другой запрос.'
+            : 'Список будет подгружаться по мере прокрутки.',
       );
     }
 
     return RefreshIndicator(
-      onRefresh: () => service.refresh(),
-      color: theme.colorScheme.primary,
-      backgroundColor: theme.colorScheme.surface,
+      onRefresh: service.refresh,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingS),
-        itemCount: followers.length,
+        controller: _scrollController,
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingM,
+          0,
+          AppDimensions.paddingM,
+          AppDimensions.paddingXL,
+        ),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: service.followers.length + 1,
         itemBuilder: (context, index) {
-          return _buildFollowerTile(followers[index], theme);
+          if (index == service.followers.length) {
+            return _buildSentinel(theme, service);
+          }
+          final follower = service.followers[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppDimensions.paddingS),
+            child: _buildListTile(follower, theme, service),
+          );
         },
       ),
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return GradientBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: Consumer<FollowerService>(
-            builder: (context, service, child) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Consumer<FollowerService>(
+      builder: (context, service, child) {
+        return GradientBackground(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              title: const Text('Подписчики'),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              foregroundColor: theme.colorScheme.onSurface,
+              actions: [
+                IconButton(
+                  tooltip: 'Обновить',
+                  onPressed: service.isRefreshing ? null : service.refresh,
+                  icon: service.isRefreshing
+                      ? SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      : const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+            body: ResponsiveContainer(
+              child: Column(
                 children: [
-                  const Text('Мои подписки'),
-                  if (service.hasFollowers)
-                    Text(
-                      '${service.followers.length} ${_getFollowersCountText(service.followers.length)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                  _buildSearchBar(theme),
+                  if (service.followersError != null && service.followers.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM),
+                      child: ErrorView(
+                        error: service.followersError!,
+                        onRetry: () => service.loadFirstFollowersPage(query: _query),
                       ),
                     ),
+                  Expanded(child: _buildBody(theme, service)),
                 ],
-              );
-            },
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          foregroundColor: theme.colorScheme.onSurface,
-          actions: [
-            Consumer<FollowerService>(
-              builder: (context, service, child) {
-                return IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Обновить',
-                  onPressed: service.isLoading ? null : () => service.refresh(),
-                );
-              },
-            ),
-          ],
-        ),
-        body: ResponsiveContainer(
-          child: Column(
-            children: [
-              _buildSearchBar(theme),
-              Expanded(
-                child: Consumer<FollowerService>(
-                  builder: (context, service, child) {
-                    return _buildContent(service, theme);
-                  },
-                ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
